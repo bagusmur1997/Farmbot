@@ -1,0 +1,256 @@
+#!/usr/bin/env python
+"""DB for Plant Detection.
+
+For Plant Detection.
+"""
+import os
+import json
+import base64
+import requests
+import numpy as np
+import CeleryPy
+import ENV
+
+
+class DB(object):
+    """Known and detected plant data for Plant Detection."""
+
+    def __init__(self):
+        """Set initial attributes."""
+        self.plants = {'known': [], 'save': [],
+                       'remove': [], 'safe_remove': []}
+        self.object_count = None
+        self.pixel_locations = []
+        self.coordinate_locations = []
+        self.calibration_pixel_locations = []
+        self.dir = os.path.dirname(os.path.realpath(__file__)) + os.sep
+        self.plants_file = "plant-detection_plants.json"
+        self.tmp_dir = None
+        self.weeder_destrut_r = 50
+        self.test_coordinates = [600, 400, 0]
+        self.coordinates = None
+        self.app = False
+        self.errors = {}
+
+    @staticmethod
+    def _api_info(api):
+        """API requests setup."""
+        api_info = {}
+        if api == 'app':
+            try:
+                api_info['token'] = os.environ['API_TOKEN']
+            except KeyError:
+                api_info['token'] = 'x.{}.x'.format(
+                    'eyJpc3MiOiAiLy9zdGFnaW5nLmZhcm1ib3QuaW86NDQzIn0')
+            try:
+                encoded_payload = api_info['token'].split('.')[1]
+                encoded_payload += '=' * (4 - len(encoded_payload) % 4)
+                json_payload = base64.b64decode(
+                    encoded_payload).decode('utf-8')
+                server = json.loads(json_payload)['iss']
+            except:  # noqa pylint:disable=W0702
+                server = '//my.farmbot.io:443'
+            api_info['url'] = 'http{}:{}/api/'.format(
+                's' if ':443' in server else '', server)
+        elif api == 'farmware':
+            try:
+                api_info['token'] = os.environ['FARMWARE_TOKEN']
+            except KeyError:
+                api_info['token'] = 'NA'
+            try:
+                os.environ['FARMWARE_URL']
+            except KeyError:
+                api_info['url'] = 'NA'
+            else:
+                api_info['url'] = CeleryPy.farmware_api_url()
+        api_info['headers'] = {
+            'Authorization': 'Bearer {}'.format(api_info['token']),
+            'content-type': "application/json"}
+        return api_info
+
+
+    def _download_image_from_url(self, img_filename, url):
+        response = requests.get(url, stream=True)
+        self.api_response_error_collector(response)
+        self.api_response_error_printer()
+        if response.status_code == 200:
+            with open(img_filename, 'wb') as img_file:
+                for chunk in response:
+                    img_file.write(chunk)
+
+    def _get_bot_state(self):
+        api = self._api_info('farmware')
+        response = requests.get(api['url'] + 'bot/state',
+                                headers=api['headers'])
+        self.api_response_error_collector(response)
+        self.api_response_error_printer()
+        if response.status_code == 200:
+            return response.json()
+
+
+
+    def _get_raw_coordinate_values(self, redis=None):
+        temp = []
+        legacy = int(os.getenv('FARMBOT_OS_VERSION', '0.0.0')[0]) < 6
+        if legacy:
+            for axis in ['x', 'y', 'z']:
+                temp.append(ENV.redis_load('location_data.position.' + axis,
+                                           other_redis=redis))
+        else:
+            state = self._get_bot_state()
+            for axis in ['x', 'y', 'z']:
+                try:
+                    value = state['location_data']['position'][str(axis)]
+                except KeyError:
+                    value = None
+                temp.append(value)
+        return temp
+
+    def getcoordinates(self, test_coordinates=False, redis=None):
+        """Get machine coordinates from bot."""
+        location = None
+        raw_values = self._get_raw_coordinate_values(redis)
+        if all(axis_value is not None for axis_value in raw_values):
+            try:
+                location = [int(coordinate) for coordinate in raw_values]
+            except ValueError:
+                pass
+        if test_coordinates:
+            self.coordinates = self.test_coordinates  # testing coordinates
+        elif location is None and not self.app:
+            self.coordinates = self.test_coordinates  # testing coordinates
+        else:
+            self.coordinates = location  # current bot coordinates
+
+    def save_plants(self):
+        """Save plant detection plants to file.
+
+        'known', 'remove', 'safe_remove', and 'save'
+        """
+        if self.tmp_dir is None:
+            json_dir = self.dir
+        else:
+            json_dir = self.tmp_dir
+        try:
+            with open(json_dir + self.plants_file, 'w') as plant_file:
+                json.dump(self.plants, plant_file)
+        except IOError:
+            self.tmp_dir = "/tmp/"
+            self.save_plants()
+
+
+    def identify(self, second_pass=False):
+        """Compare detected plants to known to separate plants from weeds."""
+        def _round(number, places):
+            """Round number to given number of decimal places."""
+            factor = 10 ** places
+            return int(number * factor) / float(factor)
+        if not second_pass:
+            self.plants['remove'] = []
+            self.plants['save'] = []
+            self.plants['safe_remove'] = []
+        if self.plants['known'] is None or self.plants['known'] == []:
+            self.plants['known'] = [{'x': 0, 'y': 0, 'radius': 0}]
+        kplants = np.array(
+            [[_['x'], _['y'], _['radius']] for _ in self.plants['known']])
+        for plant_coord in self.coordinate_locations:
+            plant_x = _round(plant_coord[0], 2)
+            plant_y = _round(plant_coord[1], 2)
+            plant_r = _round(plant_coord[2], 2)
+            plant_is = self.identify_plant(plant_x, plant_y, kplants)
+            if plant_is == 'remove':
+                self.plants['remove'].append(
+                    {'x': plant_x, 'y': plant_y, 'radius': plant_r})
+            elif plant_is == 'safe_remove' and not second_pass:
+                self.plants['safe_remove'].append(
+                    {'x': plant_x, 'y': plant_y, 'radius': plant_r})
+            else:
+                if not second_pass:
+                    self.plants['save'].append(
+                        {'x': plant_x, 'y': plant_y, 'radius': plant_r})
+        if self.plants['known'] == [{'x': 0, 'y': 0, 'radius': 0}]:
+            self.plants['known'] = []
+
+    def print_count(self, calibration=False):
+        """Output text indicating the number of plants/objects detected."""
+        if calibration:
+            object_name = 'calibration objects'
+        else:
+            object_name = 'plants'
+        print("{} {} detected in image.".format(self.object_count,
+                                                object_name))
+
+    def print_identified(self):
+        """Output text including data about identified detected plants."""
+        def _identified_plant_text_output(title, action, plants):
+            print("\n{} {}.".format(
+                len(self.plants[plants]), title))
+            if len(self.plants[plants]) > 0:
+                print("Plants at the following machine coordinates "
+                      "( X Y ) with R = radius {}:".format(action))
+            for plant in self.plants[plants]:
+                print("    ( {x:5.0f} {y:5.0f} ) R = {r:.0f}".format(
+                    x=plant['x'],
+                    y=plant['y'],
+                    r=plant['radius']))
+
+        # Print known
+        _identified_plant_text_output(
+            title='known plants inputted',
+            action='are to be saved',
+            plants='known')
+        # Print removal candidates
+        _identified_plant_text_output(
+            title='plants marked for removal',
+            action='are to be removed',
+            plants='remove')
+        # Print safe_remove plants
+        _identified_plant_text_output(
+            title='plants marked for safe removal',
+            action='were too close to the known plant to remove completely',
+            plants='safe_remove')
+        # Print saved
+        _identified_plant_text_output(
+            title='detected plants are known or have escaped removal',
+            action='have been saved',
+            plants='save')
+
+
+    def print_pixel(self):
+        """Output text pixel data for detected (but not identified) plants."""
+        if len(self.pixel_locations) > 0:
+            print("Detected object center pixel locations ( X Y ):")
+            for pixel_location in self.pixel_locations:
+                print("    ( {:5.0f}px {:5.0f}px )".format(pixel_location[0],
+                                                           pixel_location[1]))
+
+    def output_celery_script(self):
+        """Output JSON with identified plant coordinates and radii."""
+        unsent_cs = []
+        # Encode to CS
+        for mark in self.plants['remove']:
+            plant_x, plant_y = round(mark['x'], 2), round(mark['y'], 2)
+            plant_r = round(mark['radius'], 2)
+            unsent = CeleryPy.add_point(plant_x, plant_y, 0, plant_r)
+            unsent_cs.append(unsent)
+        return unsent_cs
+
+    @staticmethod
+
+
+    def upload_plants(self):
+        """Add plants to FarmBot Web App Farm Designer."""
+        point_ids = []
+        for plant in self.plants['remove']:
+            point_ids = self.upload_point(plant, 'Weed', point_ids)
+        for plant in self.plants['save']:
+            point_ids = self.upload_point(plant, 'Detected Plant', point_ids)
+        # for plant in self.plants['known']:
+        #     point_ids = self.upload_point(plant, 'Known Plant', point_ids)
+        for plant in self.plants['safe_remove']:
+            point_ids = self.upload_point(plant, 'Safe-Remove Weed', point_ids)
+        self.api_response_error_printer()
+        if point_ids:
+            # Points have been added to the web app
+            # Indicate that a sync is required for the points
+            CeleryPy.data_update('points', point_ids)

@@ -1,0 +1,7 @@
+{"thrshd_Minsize": 23880, "Peripheral Setting": [["Vaccum Pump", 10], ["Fan", 9], ["Water Pump", 8]],
+  "thrshd_gray": 128, "Scan_Y (Beg,Interval,Amount)": [0, 86, 5], "Camera ID": 1,
+  "Ac/Deceleration (X, Y)": [200, 200, 200], "thrshd_Maxsize": 99999, "Scan_X (Beg,Interval,Amount)": [0, 100, 6],
+  "limit Maximum (X,Y)": [170000000, 190000000],
+  "script Path": "/home/ying/Documents/git/Farmbot_GeneralAP/serial_script.txt",
+  "Move Amount type (5 types)": [["10", 10], ["50", 50], ["100", 100], ["200", 200], ["500", 500]],
+  "Max Speed (X, Y)": [3500, 3500, 3500]}
