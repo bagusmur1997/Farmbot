@@ -512,8 +512,12 @@ class App:
         self.btn_Indi_Light.place (x= self.Indi_Light.winfo_x() + self.Indi_Light.winfo_width()+ gui_vars.interval_x, y=self.btn_Indi_Water.winfo_y()+self.btn_Indi_Water.winfo_height() + gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Soil_Data= Tkinter.Label(self.tab_control, text='0%' , font=myfont12_Bold)
-        self.lbl_Soil_Data.place(x= self.btn_Indi_Light.winfo_x() + self.btn_Indi_Light.winfo_width() , y=self.btn_Indi_Light.winfo_y()  )
+        self.lbl_Soil_Data= Tkinter.Label(self.tab_control, text='Soil Data : ' , font=myfont12_Bold)
+        self.lbl_Soil_Data.place(x= self.btn_Indi_Light.winfo_x()+ self.btn_Indi_Light.winfo_width() + gui_vars.interval_x*3, y= self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+ gui_vars.interval_y )
+        self.root.update()
+
+        self.btn_Soil_Data = Tkinter.Button(self.tab_control, text='0%', font= myfont12_Bold, fg= 'white', activeforeground='white', bg=bgGray, activebackground=bgGray)
+        self.btn_Soil_Data.place(x= self.lbl_Soil_Data.winfo_x()+ self.lbl_Soil_Data.winfo_width(), y=self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         # ==================================================
@@ -965,7 +969,7 @@ class App:
         # ==================================================
         self.panel.after(50, self.check_frame_update)
         self.lbl_CurrPos.after(5, self.UI_callback)
-        self.lbl_Soil_Data.after(5, self.Soil_callback)
+        self.btn_Soil_Data.after(5, self.Soil_callback)
         self.statuslabel.after(5, self.check_status)
         self.panel_mergeframe.bind('<Button-1>',self.mouse_LeftClick)
         self.root.bind('<F1>',self.rdbtn_MvAmount_click)
@@ -1073,13 +1077,13 @@ class App:
         conn = sqlite3.connect("Database_Plant.db")
         cursor = conn.cursor()
         cursor.execute(
-        "CREATE TABLE IF NOT EXISTS 'Plant_Database' (No INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,Name_Plant VARCHAR(100), Location_Plant_X INTEGER, Location_Plant_Y INTEGER, Date_Plant TIME, Amount_Water INTEGER, Age_Plant REAL)")
+        "CREATE TABLE IF NOT EXISTS 'Plant_Database' (No INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,Name_Plant VARCHAR(100), Location_Plant_X INTEGER, Location_Plant_Y INTEGER, Date_Plant TIME, Amount_Water INTEGER, Age_Plant REAL, Note_Plant VARCHAR(100))")
         conn.commit()
 
     def DatabaseAdd(self):
     	db = sqlite3.connect('Database_Plant.db')
-    	db.execute("insert into Plant_Database (Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, Age_Plant) values (?,?,?,datetime('now', 'localtime'),0,0)",
-                    [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get()])
+    	db.execute("insert into Plant_Database (Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, Age_Plant, Note_Plant) values (?,?,?,datetime('now', 'localtime'),0,0,?)",
+                    [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get()])
     	db.commit()
 
     def Viewall(self):
@@ -1090,11 +1094,11 @@ class App:
         tes = str(datetime.datetime.now())
         #cursor.execute("UPDATE Plant_Database SET Age_Plant = (SELECT strftime('%s', 'now') - strftime('%s',Date_Plant) FROM Plant_Database)")
         #cursor.execute("SELECT * FROM 'Plant_Database'")
-        cursor.execute("SELECT No, Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, round(CAST((julianday('now','localtime') - julianday(Date_Plant))*24 AS real),2) AS Age_Plant FROM Plant_Database")
+        cursor.execute("SELECT No, Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, round(CAST((julianday('now','localtime') - julianday(Date_Plant))*24 AS real),2) AS Age_Plant,  Note_Plant FROM Plant_Database")
         fetch = cursor.fetchall()
         scrollbarx = Scrollbar(ViewFrame, orient=HORIZONTAL)
         scrollbary = Scrollbar(ViewFrame, orient=VERTICAL)
-        tree = ttk.Treeview(ViewFrame, columns=("No", "Name_Plant", "Location_Plant_X", "Location_Plant_Y", "Date_Plant", "Amount_Water", "Age_Plant"),
+        tree = ttk.Treeview(ViewFrame, columns=("No", "Name_Plant", "Location_Plant_X", "Location_Plant_Y", "Date_Plant", "Amount_Water", "Age_Plant", "Note_Plant"),
                             selectmode=EXTENDED, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
 
         scrollbary.config(command=tree.yview)
@@ -1108,6 +1112,7 @@ class App:
         tree.heading('Date_Plant', text="Date Plant", anchor=CENTER),
         tree.heading('Amount_Water', text="Amount Water", anchor=CENTER),
         tree.heading('Age_Plant', text="Age", anchor=CENTER),
+        tree.heading('Note_Plant', text="Note Plant", anchor=CENTER),
         tree.column('#0', stretch=NO, minwidth=0, width=0),
         tree.column('#1', stretch=NO, minwidth=0, width=30),
         tree.column('#2', stretch=NO, minwidth=0, width=120),
@@ -1115,7 +1120,8 @@ class App:
         tree.column('#4', stretch=NO, minwidth=0, width=50),
         tree.column('#5', stretch=NO, minwidth=0, width=150),
         tree.column('#6', stretch=NO, minwidth=0, width=60),
-        tree.column('#7', stretch=NO, minwidth=0, width=60)
+        tree.column('#7', stretch=NO, minwidth=0, width=60),
+        tree.column('#8', stretch=NO, minwidth=0, width=200),
         tree.pack()
 
         for data in fetch:
@@ -1126,8 +1132,8 @@ class App:
 
     def Update_data(self):
     	db = sqlite3.connect('Database_Plant.db')
-    	db.execute('update Plant_Database set Name_Plant, Location_Plant_X, Location_Plant_Y) values (?,?,?,?)',
-                    [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get()])
+    	db.execute('update Plant_Database set Name_Plant, Location_Plant_X, Location_Plant_Y, Note_Plant) values (?,?,?,?,?)',
+                    [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get()])
     	db.commit()
 
     def Delete_data(self):
@@ -1442,11 +1448,11 @@ class App:
 
     def Soil_callback(self):
         if self.ArdMntr.connect== True:
-            Soil_Data = self.ArdMntr.cmd_state.strSoil
+            Soil_Data = self.ArdMntr.cmd_state.strSoil + '%'
         else:
             Soil_Data = 'Get Soil Data Fail'
-        self.lbl_Soil_Data.config(text= Soil_Data)
-        self.lbl_Soil_Data.after(10, self.Soil_callback)
+        self.btn_Soil_Data.config(text= Soil_Data)
+        self.btn_Soil_Data.after(10, self.Soil_callback)
 
 
 
@@ -2192,20 +2198,7 @@ class App:
         self.saveImg_function(self.singleframe, gui_vars.savePath, self.imagename)
         self.display_panel_singleframe(self.singleframe)
 
-        tes_soil = 'T01 V1'
-        self.ArdMntr.serial_send(tes_soil)
-        time.sleep(10)
-        soil_data = float(self.ArdMntr.cmd_state.strSoil)
-        print('Tes')
-        print(soil_data)
-        self.lbl_Soil_Data.config(text= soil_data)
 
-        if soil_data > 200 :
-            print('Work')
-        else :
-            print('Not Work')
-        tes_soil1 = 'T01 V0'
-        self.ArdMntr.serial_send(tes_soil1)
 
     def btn_loadImg_click(self):
         dir_name, file_name = os.path.split(__file__)
@@ -2536,11 +2529,14 @@ class App:
                     '''while 1:
                         self.ArdMntr.Water_Schedule(self.pinNumb_water, not(self.ArdMntr.WaterOn) , 5)
                         time.sleep(1)'''
-                    check_soil = 'T01 V1'
-                    self.ArdMntr.serial_send(check_soil)
-                    check_soil = self.ArdMntr.cmd_state.strSoil
-                    time.sleep(5)
-                    if check_soil > 0 and check_soil < 2 :
+                    tes_soil = 'T01 V1'
+                    self.ArdMntr.serial_send(tes_soil)
+                    time.sleep(10)
+                    soil_data = float(self.ArdMntr.cmd_state.strSoil)
+                    print('Test Soil :')
+                    print(soil_data)
+
+                    if soil_data < 80 :
                         cmd = 'F02 N{0}'.format(self.get_amount_water)
                         print(self.get_amount_water, 'ml')
                         self.serial_send(cmd)
@@ -2549,6 +2545,13 @@ class App:
                         db.execute("UPDATE Plant_Database SET Amount_Water = (Amount_Water + ?) WHERE Location_Plant_X = ? AND Location_Plant_Y = ?" , (water, tmp_x, tmp_y,))
                         db.commit()
                         time.sleep(1)
+                    else :
+                        print('Not Work')
+                    tes_soil1 = 'T01 V0'
+                    self.ArdMntr.serial_send(tes_soil1)
+
+
+
 
 
                     if self.StartScan_judge== False:
