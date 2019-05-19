@@ -247,6 +247,15 @@ class MonitorThread(threading.Thread):
             #self.serial_send('F41 P8 V0 M0')  #2018.02.12 {0}->8
             self.LightOn= False
 
+    def switch_Moisture(self, arg_On=True):
+        Moisture3 = 'T01 V1'
+        Moisture4 = 'T01 V0'
+        if arg_On:
+            self.serial_send(Moisture3)
+            self.MoistureOn= True
+        else :
+            self.serial_send(Moisture4)
+            self.MoistureOn = False
 
     def move_Coord(self, arg_Xpos, arg_Ypos, arg_Zpos):
         cmd= 'G00 X{0} Y{1} Z{2}'.format(arg_Xpos, arg_Ypos, arg_Zpos)

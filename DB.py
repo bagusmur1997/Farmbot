@@ -68,6 +68,29 @@ class DB(object):
             'content-type': "application/json"}
         return api_info
 
+    def api_get(self, endpoint):
+        """GET from an API endpoint."""
+        api = self._api_info('app')
+        response = requests.get(api['url'] + endpoint, headers=api['headers'])
+        self.api_response_error_collector(response)
+        self.api_response_error_printer()
+        return response
+
+    def api_response_error_collector(self, response):
+        """Catch and log errors from API requests."""
+        self.errors = {}  # reset
+        if response.status_code != 200:
+            try:
+                self.errors[str(response.status_code)] += 1
+            except KeyError:
+                self.errors[str(response.status_code)] = 1
+
+    def api_response_error_printer(self):
+        """Print API response error output."""
+        error_string = ''
+        for key, value in self.errors.items():
+            error_string += '{} {} errors '.format(value, key)
+        print(error_string)
 
     def _download_image_from_url(self, img_filename, url):
         response = requests.get(url, stream=True)
@@ -87,7 +110,29 @@ class DB(object):
         if response.status_code == 200:
             return response.json()
 
-
+    def get_image(self, image_id):
+        """Download an image from the FarmBot Web App API."""
+        response = self.api_get('images/' + str(image_id))
+        if response.status_code == 200:
+            image_json = response.json()
+            image_url = image_json['attachment_url']
+            try:
+                testfilename = self.dir + 'test_write.try_to_write'
+                testfile = open(testfilename, "w")
+                testfile.close()
+                os.remove(testfilename)
+            except IOError:
+                directory = '/tmp/'
+            else:
+                directory = self.dir
+            image_filename = directory + str(image_id) + '.jpg'
+            self._download_image_from_url(image_filename, image_url)
+            self.coordinates = list([int(image_json['meta']['x']),
+                                     int(image_json['meta']['y']),
+                                     int(image_json['meta']['z'])])
+            return image_filename
+        else:
+            return None
 
     def _get_raw_coordinate_values(self, redis=None):
         temp = []
@@ -138,6 +183,51 @@ class DB(object):
             self.tmp_dir = "/tmp/"
             self.save_plants()
 
+    def load_plants_from_file(self):
+        """Load plants from file."""
+        try:
+            with open(self.dir + self.plants_file, 'r') as plant_file:
+                self.plants = json.load(plant_file)
+        except IOError:
+            pass
+
+    def load_plants_from_web_app(self):
+        """Download known plants from the FarmBot Web App API."""
+        response = self.api_get('points')
+        app_points = response.json()
+        if response.status_code == 200:
+            plants = []
+            for point in app_points:
+                if point['pointer_type'] == 'Plant':
+                    plants.append({
+                        'x': point['x'],
+                        'y': point['y'],
+                        'radius': point['radius']})
+            self.plants['known'] = plants
+
+    def identify_plant(self, plant_x, plant_y, known):
+        """Identify a provided plant based on its location.
+
+        Args:
+            known: [x, y, r] array of known plants
+            plant_x, plant_y: x and y coordinates of plant to identify
+        Coordinate is:
+            within a known plant area: a plant to 'save' (it's the known plant)
+            within a known plant safe zone: a 'safe_remove' weed
+            outside a known plant area or safe zone: a 'remove' weed
+        """
+        cxs, cys, crs = known[:, 0], known[:, 1], known[:, 2]
+        if all((plant_x - cx)**2 + (plant_y - cy)**2
+               > (cr + self.weeder_destrut_r)**2
+               for cx, cy, cr in zip(cxs, cys, crs)):
+            # Plant is outside of known plant safe zone
+            return 'remove'
+        elif all((plant_x - cx)**2 + (plant_y - cy)**2 > cr**2
+                 for cx, cy, cr in zip(cxs, cys, crs)):
+            # Plant is inside known plant safe zone
+            return 'safe_remove'
+        else:  # Plant is within known plant area
+            return 'save'
 
     def identify(self, second_pass=False):
         """Compare detected plants to known to separate plants from weeds."""
@@ -215,6 +305,25 @@ class DB(object):
             action='have been saved',
             plants='save')
 
+    def get_json_coordinates(self):
+        """Return coordinate dictionaries."""
+        coordinate_list = []
+        for coordinate in self.coordinate_locations:
+            coordinate_list.append({"x": coordinate[0],
+                                    "y": coordinate[1],
+                                    "radius": coordinate[2]})
+        return coordinate_list
+
+    def print_coordinates(self):
+        """Output coordinate data for detected (but not identified) plants."""
+        if len(self.coordinate_locations) > 0:
+            print("Detected object machine coordinates "
+                  "( X Y ) with R = radius:")
+            for coordinate_location in self.coordinate_locations:
+                print("    ( {:5.0f} {:5.0f} ) R = {:.0f}".format(
+                    coordinate_location[0],
+                    coordinate_location[1],
+                    coordinate_location[2]))
 
     def print_pixel(self):
         """Output text pixel data for detected (but not identified) plants."""
@@ -236,7 +345,42 @@ class DB(object):
         return unsent_cs
 
     @staticmethod
+    def prepare_point_data(point, name):
+        """Prepare point payload for uploading to the FarmBot Web App."""
+        # color
+        if name == 'Weed':
+            color = 'red'
+        elif name == 'Detected Plant':
+            color = 'blue'
+        elif name == 'Known Plant':
+            color = 'green'
+        elif name == 'Safe-Remove Weed':
+            color = 'cyan'
+        else:
+            color = 'grey'
+        # payload
+        plant_x, plant_y = round(point['x'], 2), round(point['y'], 2)
+        plant_r = round(point['radius'], 2)
+        point_data = {'x': str(plant_x), 'y': str(plant_y), 'z': 0,
+                      'radius': str(plant_r),
+                      'meta': {'created_by': 'plant-detection',
+                               'color': color},
+                      'name': name, 'pointer_type': 'GenericPointer'}
+        return point_data
 
+    def upload_point(self, point, name, id_list):
+        """Upload a point to the FarmBot Web App."""
+        payload = json.dumps(self.prepare_point_data(point, name))
+        # API Request
+        api = self._api_info('app')
+        response = requests.post(api['url'] + 'points',
+                                 data=payload, headers=api['headers'])
+        point_id = None
+        if response.status_code == 200:
+            point_id = response.json()['id']
+            id_list.append(point_id)
+        self.api_response_error_collector(response)
+        return id_list
 
     def upload_plants(self):
         """Add plants to FarmBot Web App Farm Designer."""

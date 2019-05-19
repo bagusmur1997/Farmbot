@@ -188,6 +188,74 @@ class PlantDetection(object):
                 self.params.parameters['S'][1] = hsv_max[1]
                 self.params.parameters['V'][1] = hsv_max[2]
 
+    def _calibration_input(self):  # provide inputs to calibration
+        if self.args['app_image_id'] is not None:
+            self.args['calibration_img'] = int(self.args['app_image_id'])
+        if self.args['calibration_img'] is None and self.args['coordinates']:
+            # Calibration requested, but no image provided.
+            # Take a calibration image.
+            self.args['calibration_img'] = self.capture()
+
+        # Set calibration input parameters
+        if self.args['from_env_var']:
+            calibration_input = 'env_var'
+        elif self.args['from_file']:  # try to load from file
+            calibration_input = 'file'
+        else:  # Use default calibration inputs
+            calibration_input = None
+
+        # Call coordinate conversion module
+        self.p2c = Pixel2coord(self.plant_db,
+                               calibration_image=self.args['calibration_img'],
+                               calibration_data=self.args['calibration_data'],
+                               load_data_from=calibration_input)
+        self.p2c.debug = self.args['debug']
+
+    def calibrate(self):
+        """Calibrate the camera for plant detection.
+
+        Initialize the coordinate conversion module using a calibration image,
+        perform calibration, and save calibration data.
+        """
+        self._calibration_input()  # initialize coordinate conversion module
+        exit_flag = self.p2c.calibration()  # perform calibration
+        if exit_flag:
+            sys.exit(0)
+        self._calibration_output()  # save calibration data
+
+    def _calibration_output(self):  # save calibration data
+        if self.args['save'] or self.args['debug']:
+            self.p2c.image.images['current'] = self.p2c.image.images['marked']
+            self.p2c.image.save('calibration_result')
+
+        # Print verbose results
+        if self.args['verbose'] and self.args['text_output']:
+            if self.p2c.calibration_params['total_rotation_angle'] != 0:
+                print(" Note: required rotation of "
+                      "{:.2f} degrees executed.".format(
+                          self.p2c.calibration_params['total_rotation_angle']))
+            if self.args['debug']:
+                # print number of objects detected
+                self.plant_db.print_count(calibration=True)
+                # print coordinate locations of calibration objects
+                self.p2c.p2c(self.plant_db)
+                self.plant_db.print_coordinates()
+                print('')
+
+        # Print condensed output if verbose output is not chosen
+        if self.args['text_output'] and not self.args['verbose']:
+            print("Calibration complete. (rotation:{}, scale:{})".format(
+                self.p2c.calibration_params['total_rotation_angle'],
+                self.p2c.calibration_params['coord_scale']))
+
+        # Save calibration data
+        if self.args['from_env_var']:
+            # to environment variable
+            self.p2c.save_calibration_data_to_env()
+        elif self.args['from_file']:  # to file
+            self.p2c.save_calibration_parameters()
+        else:  # to Parameters() instance
+            self.params.calibration_data = self.p2c.calibration_params
 
     def _detection_input(self):  # provide input to detect_plants
         # Load input parameters
@@ -371,3 +439,53 @@ class PlantDetection(object):
         # Save plants
         if self.args['save']:
             self.plant_db.save_plants()
+
+
+if __name__ == "__main__":
+    DIR = os.path.dirname(os.path.realpath(__file__)) + os.sep
+    IMG = DIR + 'soil_image.jpg'
+    CALIBRATION_IMG = DIR + "p2c_test_calibration.jpg"
+    if len(sys.argv) == 1:
+        PD = PlantDetection(
+            image=IMG,
+            blur=15, morph=6, iterations=4,
+            calibration_img=CALIBRATION_IMG,
+            known_plants=[{'x': 200, 'y': 600, 'radius': 100},
+                          {'x': 900, 'y': 200, 'radius': 120}])
+        PD.calibrate()  # use calibration img to get coordinate conversion data
+        PD.detect_plants()  # detect coordinates and sizes of weeds and plants
+    else:  # command line argument(s)
+        if sys.argv[1] == '--GUI':
+            from plant_detection.GUI import PlantDetectionGUI
+            if len(sys.argv) == 3:  # image filename provided
+                GUI = PlantDetectionGUI(image_filename=sys.argv[2],
+                                        plant_detection=PlantDetection)
+            else:  # Use `soil_image.jpg`
+                dir_name, file_name = os.path.split(__file__)
+                dir_name = os.path.join(dir_name, '')
+                str_imagePath = tkFileDialog.askopenfilename(title = "Select image",initialdir=dir_name, filetypes = (("jpeg files","*.jpg"), ("png files","*.png"), ("tif files","*.tif"),("all files","*.*")))
+                GUI = PlantDetectionGUI(image_filename=str_imagePath,
+                                        plant_detection=PlantDetection)
+            GUI.run()
+        elif sys.argv[1] == '--cGUI':
+            from plant_detection.GUI import CalibrationGUI
+            if len(sys.argv) == 3:  # calibration image filename provided
+                calibration_gui = CalibrationGUI(
+                    cimage_filename=sys.argv[2],
+                    image_filename=IMG,
+                    plant_detection=PlantDetection)
+            elif len(sys.argv) == 4:  # both image filenames provided
+                calibration_gui = CalibrationGUI(
+                    cimage_filename=sys.argv[2],
+                    image_filename=sys.argv[3],
+                    plant_detection=PlantDetection)
+            else:  # Use `soil_image.jpg`
+                calibration_gui = CalibrationGUI(
+                    image_filename=IMG,
+                    plant_detection=PlantDetection)
+            calibration_gui.run()
+        else:  # image filename provided
+            IMG = sys.argv[1]
+            PD = PlantDetection(
+                image=IMG, from_file=True, debug=True)
+            PD.detect_plants()

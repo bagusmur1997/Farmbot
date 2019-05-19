@@ -97,6 +97,11 @@ class App:
         bgGray= '#333333333'
         bgGray_active= 'gray'
         bgGray_select= '#999'
+        bgBlue= '#245f8c' #00173b
+        bgBlue1= '#78abe2'
+        bgBlue3= '#00173b'
+        bgBlue4= '#bce2ff'
+        bgBlue5= '#effffe'
         self.bgRed= '#aa0000'
         self.bgRed_active= '#ee0000'
         self.Move_intervalUnit= 1
@@ -207,8 +212,12 @@ class App:
         # ==================================================
         # [ROOT] Current position of motor
         # ==================================================
-        self.lbl_CurrPos= Tkinter.Label(self.root, text="Location: (X, Y, Z)= (0, 0, 0)",font= myfont14_Bold)
-        self.lbl_CurrPos.place(x= gui_vars.interval_x, y= gui_vars.interval_y)
+        self.Bg_StepMotor_Control = Tkinter.Label(self.root, text=" ", font= myfont14_Bold, width= 31, height= 1, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue3, highlightthickness=2)
+    	self.Bg_StepMotor_Control.place(x= 2, y= 2)
+    	self.root.update()
+
+        self.lbl_CurrPos= Tkinter.Label(self.root, text="Location: (X, Y, Z)= (0, 0, 0)",font= myfont14_Bold, bg=bgBlue1)
+        self.lbl_CurrPos.place(x= gui_vars.interval_x, y= gui_vars.interval_y-2)
         self.root.update()
 
 
@@ -220,6 +229,7 @@ class App:
         Left_width= int((self.screen_width-gui_vars.interval_x*2)*0.25)
         Left_height= int((self.screen_height-self.FileMenu.winfo_reqheight()*1- self.statuslabel.winfo_reqheight()*0-gui_vars.interval_y*2- self.lbl_CurrPos.winfo_reqheight()))
         self.tabbox = ttk.Notebook(self.root, width=Left_width, height=Left_height)
+
         self.tab_control = Tkinter.Frame(self.root)
         self.tab_loadscript = Tkinter.Frame(self.root)
         self.tab_event_schedule = Tkinter.Frame(self.root)
@@ -238,8 +248,18 @@ class App:
         # ==================================================
         # [TAB CONTROL] Step Motor Control
         # ==================================================
-        self.lbl_MoveCoord= Tkinter.Label(self.tab_control, text="MOVE AMOUNT (MM)".center(38), font= myfont14_Bold)
-        self.lbl_MoveCoord.place(x= gui_vars.interval_x, y= gui_vars.interval_y)
+
+
+        self.Bg_Move_Control = Tkinter.Label(self.tab_control, text="", font= myfont8_Bold, width = 80, height =20)
+        self.Bg_Move_Control.place(x=0, y=0)
+        self.root.update()
+
+        self.Bg_StepMotor_Control = Tkinter.Label(self.tab_control, text=" ", font= myfont14_Bold, width= 30, height= 13, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue3, highlightthickness=2)
+    	self.Bg_StepMotor_Control.place(x=gui_vars.interval_x + 2, y= 0)
+    	self.root.update()
+
+        self.lbl_MoveCoord= Tkinter.Label(self.tab_control, text="MOVE AMOUNT (MM)".center(38), font= myfont14_Bold,fg='white', width=25, bg=bgGray)
+        self.lbl_MoveCoord.place(x= gui_vars.interval_x * 5, y= gui_vars.interval_y)
         self.root.update()
 
         # ==================================================
@@ -248,37 +268,32 @@ class App:
 
         self.MvAmount= Tkinter.IntVar()
         #Move Amount 10 mm
-        self.rdbtn_MvAmount_1= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[0][0], value= self.rdbtnMvAmount_Mode[0][1],variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active,selectcolor= bgGray_select)
+        self.rdbtn_MvAmount_1= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[0][0], value= self.rdbtnMvAmount_Mode[0][1],variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= bgBlue3, activeforeground=bgBlue3, bg= bgBlue, activebackground= bgBlue1,selectcolor= bgBlue4)
         self.rdbtn_MvAmount_1.place(x= gui_vars.interval_x * 3, y=self.lbl_MoveCoord.winfo_y() + self.lbl_MoveCoord.winfo_reqheight()+ gui_vars.interval_y)
         self.root.update()
 
         #Move Amount 50 mm
-        self.rdbtn_MvAmount_5= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[1][0], value=self.rdbtnMvAmount_Mode[1][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active,selectcolor= bgGray_select)
+        self.rdbtn_MvAmount_5= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[1][0], value=self.rdbtnMvAmount_Mode[1][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= bgBlue3, activeforeground=bgBlue3, bg= bgBlue, activebackground= bgBlue1,selectcolor= bgBlue4)
         self.rdbtn_MvAmount_5.place(x= gui_vars.interval_x + self.rdbtn_MvAmount_1.winfo_x() + self.rdbtn_MvAmount_1.winfo_reqwidth(),y= self.rdbtn_MvAmount_1.winfo_y())
         self.root.update()
 
         #Move Amount 100 mm
-        self.rdbtn_MvAmount_10= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[2][0], value=self.rdbtnMvAmount_Mode[2][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active,selectcolor= bgGray_select)
+        self.rdbtn_MvAmount_10= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[2][0], value=self.rdbtnMvAmount_Mode[2][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= bgBlue3, activeforeground=bgBlue3, bg= bgBlue, activebackground= bgBlue1,selectcolor= bgBlue4)
         self.rdbtn_MvAmount_10.place(x= gui_vars.interval_x + self.rdbtn_MvAmount_5.winfo_x() + self.rdbtn_MvAmount_5.winfo_reqwidth(),y= self.rdbtn_MvAmount_1.winfo_y())
         self.root.update()
 
         #Move Amount 200 mm
-        self.rdbtn_MvAmount_20= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[3][0], value=self.rdbtnMvAmount_Mode[3][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active,selectcolor= bgGray_select)
+        self.rdbtn_MvAmount_20= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[3][0], value=self.rdbtnMvAmount_Mode[3][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= bgBlue3, activeforeground=bgBlue3, bg= bgBlue, activebackground= bgBlue1,selectcolor= bgBlue4)
         self.rdbtn_MvAmount_20.place(x= gui_vars.interval_x + self.rdbtn_MvAmount_10.winfo_x() + self.rdbtn_MvAmount_10.winfo_reqwidth(),y= self.rdbtn_MvAmount_1.winfo_y())
         self.root.update()
 
         #Move Amount 500 mm
-        self.rdbtn_MvAmount_50= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[4][0], value=self.rdbtnMvAmount_Mode[4][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active,selectcolor= bgGray_select)
+        self.rdbtn_MvAmount_50= Tkinter.Radiobutton(self.tab_control, text= self.rdbtnMvAmount_Mode[4][0], value=self.rdbtnMvAmount_Mode[4][1], variable= self.MvAmount,font= myfont12_Bold, command= self.rdbtn_MvAmount_click, indicatoron=0, width=5, fg= bgBlue3, activeforeground=bgBlue3, bg= bgBlue, activebackground= bgBlue1,selectcolor= bgBlue4)
         self.rdbtn_MvAmount_50.place(x= gui_vars.interval_x + self.rdbtn_MvAmount_20.winfo_x() + self.rdbtn_MvAmount_20.winfo_reqwidth(),y= self.rdbtn_MvAmount_1.winfo_y())
         self.root.update()
 
-
         self.rdbtn_MvAmount_1.select()  					#2018.02.28
         self.Move_interval= self.rdbtnMvAmount_Mode[0][1]   #2018.02.28
-
-        self.lbl_posUnit_1= Tkinter.Label(self.tab_control, text='')
-        self.lbl_posUnit_1.place(x= self.rdbtn_MvAmount_50.winfo_x() + self.rdbtn_MvAmount_50.winfo_width(), y= self.rdbtn_MvAmount_1.winfo_y()+gui_vars.interval_y)
-        self.root.update()
 
         # ==================================================
         # [TAB CONTROL] Move 1 interval at specific Axis
@@ -313,13 +328,13 @@ class App:
         self.root.update()
 
         # Move Axis Z
-        self.btn_MoveZUp= Tkinter.Button(self.tab_control,image= photo_up, cursor= 'hand2', command= lambda: self.btn_MoveAmountZaxis_click('Up'))
+        self.btn_MoveZUp= Tkinter.Button(self.tab_control,image= photo_up, cursor= 'hand2', command= lambda: self.btn_MoveAmountZaxis_click('Down'))
         self.btn_MoveZUp.image= photo_up
         self.btn_MoveZUp.place(x= self.btn_MoveRight.winfo_x()+ self.btn_MoveRight.winfo_reqwidth()+ gui_vars.interval_x*4, y=self.btn_MoveUp.winfo_y())
         self.root.update()
 
         # Move Axis Z Invert
-        self.btn_MoveZDown= Tkinter.Button(self.tab_control,image= photo_down, cursor= 'hand2', command= lambda: self.btn_MoveAmountZaxis_click('Down'))
+        self.btn_MoveZDown= Tkinter.Button(self.tab_control,image= photo_down, cursor= 'hand2', command= lambda: self.btn_MoveAmountZaxis_click('Up'))
         self.btn_MoveZDown.image= photo_down
         self.btn_MoveZDown.place(x= self.btn_MoveZUp.winfo_x(), y=self.btn_MoveDown.winfo_y())
         self.root.update()
@@ -331,71 +346,85 @@ class App:
         photo_seed= self.IconResize(gui_vars.saveParaPath+'img_Seed.png')
         self.btn_Seed= Tkinter.Button(self.tab_control,image= photo_seed, cursor= 'hand2', command= self.btn_Seed_click)
         self.btn_Seed.image= photo_seed
-        self.btn_Seed.place(x= self.btn_MoveUp.winfo_x()- int(self.btn_MoveUp.winfo_reqwidth()*2)- gui_vars.interval_x, y=self.btn_MoveDown.winfo_y()+ self.btn_MoveDown.winfo_reqheight()+ gui_vars.interval_y*2)
+        self.btn_Seed.place(x= gui_vars.interval_x * 3, y=self.btn_MoveDown.winfo_y()+ self.btn_MoveDown.winfo_reqheight()+ gui_vars.interval_y*2)
         self.root.update()
 
         # Button Watering
         photo_water= self.IconResize(gui_vars.saveParaPath+'img_Water.png')
         self.btn_Water= Tkinter.Button(self.tab_control,image= photo_water, cursor= 'hand2', command= self.btn_Water_click)
         self.btn_Water.image= photo_water
-        self.btn_Water.place(x= self.btn_Seed.winfo_x()+ int(self.btn_Seed.winfo_reqwidth()*1.5)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
+        self.btn_Water.place(x= self.btn_Seed.winfo_x()+ int(self.btn_Seed.winfo_reqwidth()*1.2)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
         self.root.update()
 
         # Button Light
         photo_light= self.IconResize(gui_vars.saveParaPath+'img_Light.png')
         self.btn_Light= Tkinter.Button(self.tab_control,image= photo_light, cursor= 'hand2', command= self.btn_Light_click)
         self.btn_Light.image= photo_light
-        self.btn_Light.place(x= self.btn_Water.winfo_x()+ int(self.btn_Water.winfo_reqwidth()*1.5)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
+        self.btn_Light.place(x= self.btn_Water.winfo_x()+ int(self.btn_Water.winfo_reqwidth()*1.2)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
         self.root.update()
 
         # Button Take Photo Camera
         photo_cam= self.IconResize(gui_vars.saveParaPath+'img_Cam.png')
         self.btn_CamGrab= Tkinter.Button(self.tab_control,image= photo_cam, cursor= 'hand2', command= self.btn_saveImg_click)
         self.btn_CamGrab.image= photo_cam
-        self.btn_CamGrab.place(x= self.btn_Light.winfo_x()+ int(self.btn_Light.winfo_reqwidth()*1.5)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
+        self.btn_CamGrab.place(x= self.btn_Light.winfo_x()+ int(self.btn_Light.winfo_reqwidth()*1.2)+ gui_vars.interval_x, y=self.btn_Seed.winfo_y())
+        self.root.update()
+
+        # Button Moisture Sensor
+        photo_moisture= self.IconResize(gui_vars.saveParaPath+'img_moisture.png')
+        self.btn_Moisture= Tkinter.Button(self.tab_control, image= photo_moisture, cursor='hand2')
+        self.btn_Moisture.image= photo_moisture
+        self.btn_Moisture.place(x= self.btn_CamGrab.winfo_x() + int(self.btn_CamGrab.winfo_reqwidth()*1.2) + gui_vars.interval_x, y=self.btn_Seed.winfo_y())
+        self.root.update()
+
+        # Button Home
+        photo_home = self.IconResize(gui_vars.saveParaPath+'img_home.png')
+        self.btn_Home= Tkinter.Button(self.tab_control, image=photo_home, cursor='hand2', command= self.btn_Home_click)
+        self.btn_Home.image= photo_home
+        self.btn_Home.place(x= self.btn_Moisture.winfo_x() + int(self.btn_Moisture.winfo_reqwidth() * 1.2) + gui_vars.interval_x, y= self.btn_Moisture.winfo_y())
         self.root.update()
 
         # ==================================================
         # [TAB CONTROL] Move To
         # ==================================================
 
-        self.lbl_Xposs= Tkinter.Label(self.tab_control, text= "MOTOR COORDINATES (MM)".center(30),font= myfont14_Bold)
-        self.lbl_Xposs.place(x= gui_vars.interval_x, y = self.btn_Seed.winfo_y()+ self.btn_Seed.winfo_height()+gui_vars.interval_y)
+        self.lbl_Xposs= Tkinter.Label(self.tab_control, text= "MOTOR COORDINATES (MM)".center(30), fg='white', width= 28, bg=bgGray,font= myfont14_Bold)
+        self.lbl_Xposs.place(x= gui_vars.interval_x *3, y = self.btn_Seed.winfo_y()+ self.btn_Seed.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Xpos= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12)
-        self.lbl_Xpos.place(x= gui_vars.interval_x , y = self.lbl_Xposs.winfo_y()+ self.lbl_Xposs.winfo_height()+gui_vars.interval_y)
+        self.lbl_Xpos= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Xpos.place(x= gui_vars.interval_x* 4, y = self.lbl_Xposs.winfo_y()+ self.lbl_Xposs.winfo_height()+gui_vars.interval_y + 4 )
         self.root.update()
 
-        self.entry_Xpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+        self.entry_Xpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_Xpos.insert(Tkinter.END, "0")
         self.entry_Xpos.place(x= self.lbl_Xpos.winfo_x()+ self.lbl_Xpos.winfo_width(), y= self.lbl_Xpos.winfo_y())
         self.root.update()
 
-        self.lbl_Ypos= Tkinter.Label(self.tab_control, text= 'Y :',font= myfont12)
+        self.lbl_Ypos= Tkinter.Label(self.tab_control, text= 'Y :',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Ypos.place(x= self.entry_Xpos.winfo_x()+ self.entry_Xpos.winfo_width()+ gui_vars.interval_x, y = self.lbl_Xpos.winfo_y())
         self.root.update()
-        self.entry_Ypos= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+        self.entry_Ypos= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_Ypos.insert(Tkinter.END, "0")
         self.entry_Ypos.place(x= self.lbl_Ypos.winfo_x()+ self.lbl_Ypos.winfo_width(), y= self.lbl_Ypos.winfo_y())
         self.root.update()
 
-        self.lbl_Zpos= Tkinter.Label(self.tab_control, text= 'Z :',font= myfont12)
+        self.lbl_Zpos= Tkinter.Label(self.tab_control, text= 'Z :',font= myfont12_Bold, bg =bgBlue1)
         self.lbl_Zpos.place(x= self.entry_Ypos.winfo_x()+ self.entry_Ypos.winfo_width()+ gui_vars.interval_x, y = self.lbl_Xpos.winfo_y())
         self.root.update()
 
-	self.entry_Zpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+	self.entry_Zpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_Zpos.insert(Tkinter.END, "0")
         self.entry_Zpos.place(x= self.lbl_Zpos.winfo_x()+ self.lbl_Zpos.winfo_width(), y= self.lbl_Zpos.winfo_y())
         self.root.update()
 
-        self.lbl_posUnit= Tkinter.Label(self.tab_control, text=' ')
+        self.lbl_posUnit= Tkinter.Label(self.tab_control, text='', bg=bgBlue1)
         self.lbl_posUnit.place(x= self.entry_Zpos.winfo_x()+ self.entry_Zpos.winfo_width(), y= self.entry_Zpos.winfo_y()+gui_vars.interval_y)
         self.root.update()
 
 
-	self.btn_MoveTo= Tkinter.Button(self.tab_control, text= 'GO', command= self.btn_MoveTo_click,font= myfont10_Bold, bg= self.bgGreen, fg= 'white', activebackground= self.bgGreen_active, activeforeground= 'white')
-        self.btn_MoveTo.place(x= self.lbl_posUnit.winfo_x()+ self.lbl_posUnit.winfo_reqwidth()+ gui_vars.interval_x, y=self.lbl_Ypos.winfo_y())
+	self.btn_MoveTo= Tkinter.Button(self.tab_control, text= 'GO', command= self.btn_MoveTo_click,font= myfont12_Bold, bg= self.bgGreen, fg= 'white', activebackground= self.bgGreen_active, activeforeground= 'white')
+        self.btn_MoveTo.place(x= self.lbl_posUnit.winfo_x()+ self.lbl_posUnit.winfo_reqwidth()+ gui_vars.interval_x, y=self.lbl_Xposs.winfo_y()+ self.lbl_Xposs.winfo_height()+gui_vars.interval_y)
         self.btn_MoveTo.focus_set()
         self.root.update()
 
@@ -403,80 +432,86 @@ class App:
         # ==================================================
         # [TAB CONTROL] Scanning Control
         # ==================================================
-        self.lbl_Scan= Tkinter.Label(self.tab_control, text="AUTO-SCAN".center(45), font= myfont14_Bold)
-        self.lbl_Scan.place(x= gui_vars.interval_x, y= self.btn_MoveTo.winfo_y()+ self.btn_MoveTo.winfo_height()+gui_vars.interval_y)
+
+        self.Bg_Scanning_Control = Tkinter.Label(self.tab_control, text=" ", font= myfont14_Bold, width= 30, height= 7, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue3, highlightthickness=2)
+    	self.Bg_Scanning_Control.place(x=gui_vars.interval_x + 2, y= self.btn_MoveTo.winfo_y()+ self.btn_MoveTo.winfo_height()+gui_vars.interval_y+10)
+    	self.root.update()
+
+
+        self.lbl_Scan= Tkinter.Label(self.tab_control, text="AUTO-SCAN".center(20), font= myfont14_Bold, fg='white', width= 15, bg=bgGray)
+        self.lbl_Scan.place(x= gui_vars.interval_x * 14, y= self.btn_MoveTo.winfo_y()+ self.btn_MoveTo.winfo_height()+gui_vars.interval_y+20)
         self.root.update()
 
 
-        self.lbl_Scan1stPt= Tkinter.Label(self.tab_control, text= 'Start point'.center(25),font= myfont12_Bold)
-        self.lbl_Scan1stPt.place(x= gui_vars.interval_x, y = self.lbl_Scan.winfo_y()+ self.lbl_Scan.winfo_height()+gui_vars.interval_y)
+        self.lbl_Scan1stPt= Tkinter.Label(self.tab_control, text= 'Start Point',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Scan1stPt.place(x= gui_vars.interval_x*6 , y = self.lbl_Scan.winfo_y()+ self.lbl_Scan.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Scan1stPt_X= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12_Bold)
-        self.lbl_Scan1stPt_X.place(x= gui_vars.interval_x, y = self.lbl_Scan1stPt.winfo_y()+ self.lbl_Scan1stPt.winfo_height()+gui_vars.interval_y)
+        self.lbl_Scan1stPt_X= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12_Bold, bg = bgBlue1)
+        self.lbl_Scan1stPt_X.place(x= gui_vars.interval_x * 2, y = self.lbl_Scan1stPt.winfo_y()+ self.lbl_Scan1stPt.winfo_height())
         self.root.update()
 
 
-        self.entry_1stXpos= Tkinter.Entry(self.tab_control, font= myfont12, width= 4)
+        self.entry_1stXpos= Tkinter.Entry(self.tab_control, font= myfont12, width= 4, bg=bgBlue5)
         self.entry_1stXpos.insert(Tkinter.END, '{0}'.format(self.scan_X[0]))
         self.entry_1stXpos.place(x= self.lbl_Scan1stPt_X.winfo_x()+self.lbl_Scan1stPt_X.winfo_width(), y= self.lbl_Scan1stPt_X.winfo_y())
         self.root.update()
 
-        self.lbl_Scan1stPt_Y= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold)
+        self.lbl_Scan1stPt_Y= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold, bg= bgBlue1)
         self.lbl_Scan1stPt_Y.place(x=self.entry_1stXpos.winfo_x()+self.entry_1stXpos.winfo_width(), y= self.entry_1stXpos.winfo_y())
         self.root.update()
 
-        self.entry_1stYpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+        self.entry_1stYpos= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_1stYpos.insert(Tkinter.END, '{0}'.format(self.scan_Y[0]))
         self.entry_1stYpos.place(x= self.lbl_Scan1stPt_Y.winfo_x()+self.lbl_Scan1stPt_Y.winfo_width(), y= self.lbl_Scan1stPt_Y.winfo_y())
         self.root.update()
 
-        self.lbl_ScanInterval= Tkinter.Label(self.tab_control, text='Interval'.center(30), font= myfont12_Bold)
+        self.lbl_ScanInterval= Tkinter.Label(self.tab_control, text='Interval'.center(27), font= myfont12_Bold, bg=bgBlue1)
         self.lbl_ScanInterval.place(x= self.entry_1stYpos.winfo_x()+ self.entry_1stYpos.winfo_reqwidth()+ gui_vars.interval_x*4, y= self.lbl_Scan1stPt.winfo_y())
         self.root.update()
 
-        self.lbl_Scan2ndPt_X= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12_Bold)
-        self.lbl_Scan2ndPt_X.place(x= self.lbl_ScanInterval.winfo_x(), y= self.lbl_ScanInterval.winfo_y()+self.lbl_ScanInterval.winfo_height() + gui_vars.interval_y)
+        self.lbl_Scan2ndPt_X= Tkinter.Label(self.tab_control, text= 'X :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Scan2ndPt_X.place(x= self.lbl_ScanInterval.winfo_x(), y= self.lbl_ScanInterval.winfo_y()+self.lbl_ScanInterval.winfo_height() )
         self.root.update()
 
-        self.entry_ScanInterval_X= Tkinter.Entry(self.tab_control, font=myfont12, width=4)
+        self.entry_ScanInterval_X= Tkinter.Entry(self.tab_control, font=myfont12, width=4, bg=bgBlue5)
         self.entry_ScanInterval_X.insert(Tkinter.END, '{0}'.format(self.scan_X[1]))
         self.entry_ScanInterval_X.place(x= self.lbl_Scan2ndPt_X.winfo_x()+self.lbl_Scan2ndPt_X.winfo_width(), y= self.lbl_Scan2ndPt_X.winfo_y())
         self.root.update()
 
-        self.lbl_ScanInterval_comma= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold)
+        self.lbl_ScanInterval_comma= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold, bg=bgBlue1)
         self.lbl_ScanInterval_comma.place(x=self.entry_ScanInterval_X.winfo_x()+self.entry_ScanInterval_X.winfo_width(), y= self.entry_ScanInterval_X.winfo_y())
         self.root.update()
 
-        self.entry_ScanInterval_Y= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+        self.entry_ScanInterval_Y= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_ScanInterval_Y.insert(Tkinter.END, '{0}'.format(self.scan_Y[1]))
         self.entry_ScanInterval_Y.place(x= self.lbl_ScanInterval_comma.winfo_x()+self.lbl_ScanInterval_comma.winfo_width(), y= self.lbl_ScanInterval_comma.winfo_y())
         self.root.update()
 
-        self.lbl_ScanAmount= Tkinter.Label(self.tab_control, text='Scanning Step'.center(18), font= myfont12_Bold)
-        self.lbl_ScanAmount.place(x= gui_vars.interval_x, y= self.entry_1stXpos.winfo_y()+ self.entry_1stXpos.winfo_height()+gui_vars.interval_y)
+        self.lbl_ScanAmount= Tkinter.Label(self.tab_control, text='Scanning Step'.center(20), font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_ScanAmount.place(x= gui_vars.interval_x*2 , y= self.entry_1stXpos.winfo_y()+ self.entry_1stXpos.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Scan3rdPt_X = Tkinter.Label(self.tab_control, text= 'X :', font= myfont12_Bold)
-        self.lbl_Scan3rdPt_X.place(x= self.lbl_ScanAmount.winfo_x(), y= self.lbl_ScanAmount.winfo_y()+self.lbl_ScanAmount.winfo_height() + gui_vars.interval_y)
+        self.lbl_Scan3rdPt_X = Tkinter.Label(self.tab_control, text= 'X :', font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Scan3rdPt_X.place(x= self.lbl_ScanAmount.winfo_x(), y= self.lbl_ScanAmount.winfo_y()+self.lbl_ScanAmount.winfo_height())
         self.root.update()
 
-        self.entry_ScanAmount_X= Tkinter.Entry(self.tab_control, font=myfont12, width=4)
+        self.entry_ScanAmount_X= Tkinter.Entry(self.tab_control, font=myfont12, width=4, bg=bgBlue5)
         self.entry_ScanAmount_X.insert(Tkinter.END, '{0}'.format(self.scan_X[2]))
         self.entry_ScanAmount_X.place(x= self.lbl_Scan3rdPt_X.winfo_x() + self.lbl_Scan3rdPt_X.winfo_width(), y=self.lbl_Scan3rdPt_X.winfo_y())
         self.root.update()
 
-        self.lbl_ScanAmount_comma= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold)
+        self.lbl_ScanAmount_comma= Tkinter.Label(self.tab_control, text= 'Y :', font= myfont12_Bold, bg=bgBlue1)
         self.lbl_ScanAmount_comma.place(x=self.entry_ScanAmount_X.winfo_x()+self.entry_ScanAmount_X.winfo_width(),y= self.entry_ScanAmount_X.winfo_y())
         self.root.update()
 
-        self.entry_ScanAmount_Y= Tkinter.Entry(self.tab_control, font= myfont12, width=4)
+        self.entry_ScanAmount_Y= Tkinter.Entry(self.tab_control, font= myfont12, width=4, bg=bgBlue5)
         self.entry_ScanAmount_Y.insert(Tkinter.END, '{0}'.format(self.scan_Y[2]))
         self.entry_ScanAmount_Y.place(x= self.lbl_ScanAmount_comma.winfo_x()+self.lbl_ScanAmount_comma.winfo_width(), y= self.lbl_ScanAmount_comma.winfo_y())
         self.root.update()
 
         self.btn_StartScan= Tkinter.Button(self.tab_control, text= 'Start Scan', command= self.btn_StartScan_click,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, width= btn_width, height= btn_height)
-        self.btn_StartScan.place(x= self.entry_ScanAmount_Y.winfo_x()*1.5+20, y=self.entry_ScanAmount_Y.winfo_y() - gui_vars.interval_y)
+        self.btn_StartScan.place(x= self.entry_ScanAmount_Y.winfo_x()*1.5+20, y=self.entry_ScanAmount_Y.winfo_y() - gui_vars.interval_y * 2 )
         self.root.update()
 
 
@@ -484,56 +519,64 @@ class App:
         # [TAB CONTROL] Status
         # ==================================================
 
-        self.lbl_Status= Tkinter.Label(self.tab_control, text="STATUS".center(50), font= myfont14_Bold)
-        self.lbl_Status.place(x= gui_vars.interval_x, y= self.btn_StartScan.winfo_y()+ self.btn_StartScan.winfo_height()+gui_vars.interval_y)
+        self.Bg_Status_Control = Tkinter.Label(self.tab_control, text=" ", font= myfont14_Bold, width= 30, height= 5, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_Status_Control.place(x= gui_vars.interval_x + 2, y= self.btn_StartScan.winfo_y()+ self.btn_StartScan.winfo_height()+gui_vars.interval_y*3 -2)
+    	self.root.update()
+
+        self.lbl_Status= Tkinter.Label(self.tab_control, text="STATUS", font= myfont14_Bold, bg= bgGray, width= 10, fg='white')
+        self.lbl_Status.place(x= gui_vars.interval_x * 19, y= self.btn_StartScan.winfo_y()+ self.btn_StartScan.winfo_height()+gui_vars.interval_y*4 )
         self.root.update()
 
         #Status Indicator Water
-        self.Indi_Water= Tkinter.Label(self.tab_control, text= 'Water :', font=myfont12_Bold)
+        self.Indi_Water= Tkinter.Label(self.tab_control, text= 'Water :', font=myfont12_Bold, bg=bgBlue1)
         self.Indi_Water.place(x= gui_vars.interval_x * 6, y=self.lbl_Status.winfo_y()+ self.lbl_Status.winfo_height()+ gui_vars.interval_y)
         self.root.update()
-        self.btn_Indi_Water= Tkinter.Button(self.tab_control, text='Off', font= myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
-        self.btn_Indi_Water.place (x= self.Indi_Water.winfo_x() + self.Indi_Water.winfo_width()+ gui_vars.interval_x, y=self.lbl_Status.winfo_y()+ self.lbl_Status.winfo_height())
+        self.btn_Indi_Water= Tkinter.Label(self.tab_control, text='Off', font= myfont12_Bold, width=5, height=1, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
+        self.btn_Indi_Water.place (x= self.Indi_Water.winfo_x() + self.Indi_Water.winfo_width()+ gui_vars.interval_x, y=self.lbl_Status.winfo_y()+ self.lbl_Status.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
         #Status Indicator Vaccum
-        self.Indi_Seed= Tkinter.Label(self.tab_control, text= 'Vaccum : ', font=myfont12_Bold)
+        self.Indi_Seed= Tkinter.Label(self.tab_control, text= 'Vaccum : ', font=myfont12_Bold, bg=bgBlue1)
         self.Indi_Seed.place(x= self.btn_Indi_Water.winfo_x()+ self.btn_Indi_Water.winfo_width() + gui_vars.interval_x*3, y= self.lbl_Status.winfo_y()+ self.lbl_Status.winfo_height()+ gui_vars.interval_y)
         self.root.update()
-        self.btn_Indi_Seed= Tkinter.Button(self.tab_control, text='Off', font=myfont12_Bold, fg='white', activeforeground='white', bg= self.bgRed, activebackground=self.bgRed)
-        self.btn_Indi_Seed.place(x=self.Indi_Seed.winfo_x()+ self.Indi_Seed.winfo_width(), y= self.lbl_Status.winfo_y() + self.lbl_Status.winfo_height())
+        self.btn_Indi_Seed= Tkinter.Label(self.tab_control, text='Off', font=myfont12_Bold, width=5, height=1, fg='white', activeforeground='white', bg= self.bgRed, activebackground=self.bgRed)
+        self.btn_Indi_Seed.place(x=self.Indi_Seed.winfo_x()+ self.Indi_Seed.winfo_width(), y= self.lbl_Status.winfo_y() + self.lbl_Status.winfo_height() + gui_vars.interval_y)
         self.root.update()
 
         #Status Indicator Light
-        self.Indi_Light= Tkinter.Label(self.tab_control, text='Light  :', font=myfont12_Bold)
+        self.Indi_Light= Tkinter.Label(self.tab_control, text='Light  :', font=myfont12_Bold, bg=bgBlue1)
         self.Indi_Light.place(x= self.Indi_Water.winfo_x() , y=self.btn_Indi_Water.winfo_y()+self.btn_Indi_Water.winfo_height() + gui_vars.interval_y)
         self.root.update()
-        self.btn_Indi_Light= Tkinter.Button(self.tab_control, text='Off', font= myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
+        self.btn_Indi_Light= Tkinter.Label(self.tab_control, text='Off', font= myfont12_Bold, width=5, height=1, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
         self.btn_Indi_Light.place (x= self.Indi_Light.winfo_x() + self.Indi_Light.winfo_width()+ gui_vars.interval_x, y=self.btn_Indi_Water.winfo_y()+self.btn_Indi_Water.winfo_height() + gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Soil_Data= Tkinter.Label(self.tab_control, text='Soil Data : ' , font=myfont12_Bold)
+        self.lbl_Soil_Data= Tkinter.Label(self.tab_control, text='Soil Data : ' , font=myfont12_Bold, bg=bgBlue1)
         self.lbl_Soil_Data.place(x= self.btn_Indi_Light.winfo_x()+ self.btn_Indi_Light.winfo_width() + gui_vars.interval_x*3, y= self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+ gui_vars.interval_y )
         self.root.update()
 
-        self.btn_Soil_Data = Tkinter.Button(self.tab_control, text='0%', font= myfont12_Bold, fg= 'white', activeforeground='white', bg=bgGray, activebackground=bgGray)
+        self.btn_Soil_Data = Tkinter.Label(self.tab_control, text='0%', font= myfont12_Bold, width=5, height=1, fg= 'black', bg=bgBlue)
         self.btn_Soil_Data.place(x= self.lbl_Soil_Data.winfo_x()+ self.lbl_Soil_Data.winfo_width(), y=self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         # ==================================================
         # [TAB LOAD SCRIPT]
         # ==================================================
-        self.lbl_loadscript= Tkinter.Label(self.tab_loadscript, text="Load & Run Script".center(45), font= myfont14_Bold)
-        self.lbl_loadscript.place(x= gui_vars.interval_x, y= gui_vars.interval_y)
+        self.Bg_LoadScript = Tkinter.Label(self.tab_loadscript, text=" ", font= myfont14_Bold, width= 31, height= 24, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_LoadScript.place(x= gui_vars.interval_x, y= gui_vars.interval_y)
+    	self.root.update()
+
+        self.lbl_loadscript= Tkinter.Label(self.tab_loadscript, text="Load & Run Script", width=20, font= myfont14_Bold, bg=bgGray, fg='white')
+        self.lbl_loadscript.place(x= gui_vars.interval_x*11 , y= gui_vars.interval_y *2 )
         self.root.update()
 
         self.entry_scriptPath= Tkinter.Entry(self.tab_loadscript, font= myfont12, width=25)
         self.entry_scriptPath.insert(Tkinter.END, self.scriptPath)
-        self.entry_scriptPath.place(x= self.lbl_loadscript.winfo_x(), y= self.lbl_loadscript.winfo_y()+ self.lbl_loadscript.winfo_reqheight()+ gui_vars.interval_y)
+        self.entry_scriptPath.place(x= gui_vars.interval_x *2 , y= self.lbl_loadscript.winfo_y()+ self.lbl_loadscript.winfo_reqheight()+ gui_vars.interval_y)
         self.root.update()
 
-        self.btn_choosescript= Tkinter.Button(self.tab_loadscript, text='Choose', command= self.btn_choosescript_click, font= myfont8_Bold, width=0, height=0, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active)
-        self.btn_choosescript.place(x= self.entry_scriptPath.winfo_x()+ self.entry_scriptPath.winfo_reqwidth()+ gui_vars.interval_x, y= self.entry_scriptPath.winfo_y())
+        self.btn_choosescript= Tkinter.Button(self.tab_loadscript, text='Choose', command= self.btn_choosescript_click, font= myfont8_Bold, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active)
+        self.btn_choosescript.place(x= self.entry_scriptPath.winfo_x()+ self.entry_scriptPath.winfo_reqwidth() + gui_vars.interval_x, y= self.entry_scriptPath.winfo_y())
         self.root.update()
 
         self.btn_loadscript= Tkinter.Button(self.tab_loadscript, text='Load', command= self.btn_loadscript_click, font= myfont12_Bold, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active)
@@ -548,79 +591,93 @@ class App:
         self.root.update()
 
         #self.txtbox_script = ScrolledText.ScrolledText(self.tab_loadscript, width=40, height= 30 ,font = myfont10, bd = 2, relief = RIDGE, vscrollmode= 'dynamic')
-        self.txtbox_script = Pmw.ScrolledText(self.tab_loadscript, text_width=36, text_height= 20, hscrollmode= 'dynamic', vscrollmode= 'static', text_wrap= 'none', labelpos= 'n', label_text= "Script")#, rowheader= 1)
+        self.txtbox_script = Pmw.ScrolledText(self.tab_loadscript, text_width=35, text_height= 21, text_background=bgBlue5, hscrollmode= 'dynamic', vscrollmode= 'static', text_wrap= 'none', labelpos= 'n', label_text= "Script", label_background=bgBlue, label_width=43 ,label_font= myfont10_Bold, label_foreground='white')#, rowheader= 1)
         self.txtbox_script.place(x= self.btn_loadscript.winfo_x(), y= self.btn_loadscript.winfo_y()+ self.btn_loadscript.winfo_reqheight()+ gui_vars.interval_y)
+        self.root.update()
 
         # ==================================================
         # [TAB EVENT SCHEDULE]
         # ==================================================
+        self.Bg_EveSchedule = Tkinter.Label(self.tab_event_schedule, text=" ", font= myfont14_Bold, width= 31, height= 24, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_EveSchedule.place(x= gui_vars.interval_x -4, y= gui_vars.interval_y -4 )
+    	self.root.update()
+
         #Event Schedule 1
         self.lbl_schedule= Tkinter.Label(self.tab_event_schedule, text="Event Schedule 1", font= myfont14_Bold, width= 30,fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active) #, command= self.show_hide_Event_Schedule1
         self.lbl_schedule.place(x= gui_vars.interval_x , y= gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Action= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold)
+        self.lbl_Action= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Action.place(x= gui_vars.interval_x, y = self.lbl_schedule.winfo_y()+ self.lbl_schedule.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         Action = ['Watering','Scanning']
         tkvar11.set(Action[0])
         self.entry_Action = OptionMenu(self.tab_event_schedule, tkvar11, *Action)
+        self.entry_Action.configure(background= bgBlue5)
         self.entry_Action.place(x= self.lbl_Action.winfo_x()+self.lbl_Action.winfo_width(), y= self.lbl_Action.winfo_y()-5)
         self.root.update()
         tkvar11.trace('w', self.change_dropdown11)
 
-        self.lbl_X_Schedule= Tkinter.Label(self.tab_event_schedule, text= 'Interval X :',font= myfont12_Bold)
-        self.lbl_X_Schedule.place(x= gui_vars.interval_x , y = self.entry_Action.winfo_y()+ self.entry_Action.winfo_height()+gui_vars.interval_y)
+        self.lbl_Start= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Start.place(x= gui_vars.interval_x, y = self.entry_Action.winfo_y()+ self.entry_Action.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.entry_X_Schedule= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_X_Schedule.insert(Tkinter.END, "0")
-        self.entry_X_Schedule.place(x= self.lbl_X_Schedule.winfo_x()+ self.lbl_X_Schedule.winfo_width(), y= self.lbl_X_Schedule.winfo_y())
-        self.root.update()
-
-        self.lbl_Y_Schedule= Tkinter.Label(self.tab_event_schedule, text= ', Y :',font= myfont12_Bold)
-        self.lbl_Y_Schedule.place(x= self.entry_X_Schedule.winfo_x()+ self.entry_X_Schedule.winfo_width()+ gui_vars.interval_x, y = self.lbl_X_Schedule.winfo_y())
-        self.root.update()
-
-        self.entry_Y_Schedule= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_Y_Schedule.insert(Tkinter.END, "0")
-        self.entry_Y_Schedule.place(x= self.lbl_Y_Schedule.winfo_x()+ self.lbl_Y_Schedule.winfo_width(), y= self.lbl_Y_Schedule.winfo_y())
-        self.root.update()
-
-        self.lbl_water_amount= Tkinter.Label(self.tab_event_schedule, text= '| Water :',font= myfont12_Bold)
-        self.lbl_water_amount.place(x= self.entry_Y_Schedule.winfo_x()+ self.entry_Y_Schedule.winfo_width()+ gui_vars.interval_x, y = self.entry_Y_Schedule.winfo_y())
-        self.root.update()
-
-	self.entry_water_amount= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_water_amount.insert(Tkinter.END, "0")
-        self.entry_water_amount.place(x= self.lbl_water_amount.winfo_x()+ self.lbl_water_amount.winfo_width(), y= self.lbl_water_amount.winfo_y())
-        self.root.update()
-
-
-        self.lbl_Start= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold)
-        self.lbl_Start.place(x= gui_vars.interval_x, y = self.entry_water_amount.winfo_y()+ self.entry_water_amount.winfo_height()+gui_vars.interval_y)
-        self.root.update()
-
-        self.entry_Time= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6)
+        self.entry_Time= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6, bg=bgBlue5)
         self.entry_Time.insert(Tkinter.END, '00:00')
         self.entry_Time.place(x= self.lbl_Start.winfo_x()+self.lbl_Start.winfo_width(), y= self.lbl_Start.winfo_y())
         self.root.update()
 
-        self.lbl_Schedule_comma= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold)
+        self.lbl_Schedule_comma= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Schedule_comma.place(x=self.entry_Time.winfo_x()+self.entry_Time.winfo_width(),y= self.entry_Time.winfo_y())
         self.root.update()
 
         Repeat = ['Every Day', 'Every Hour', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', ' Friday', 'Saturday']
         tkvar12.set(Repeat[0])
         self.entry_Repeat = OptionMenu(self.tab_event_schedule, tkvar12, *Repeat)
+        self.entry_Repeat.configure(background=bgBlue5)
         self.root.update()
         self.entry_Repeat.place(x= self.lbl_Schedule_comma.winfo_x()+self.lbl_Schedule_comma.winfo_width(), y= self.lbl_Schedule_comma.winfo_y()-5)
         tkvar12.trace('w', self.change_dropdown12)
         self.root.update()
 
+        self.lbl_water_amount= Tkinter.Label(self.tab_event_schedule, text= 'Water :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_amount.place(x= gui_vars.interval_x, y = self.entry_Repeat.winfo_y()+ self.entry_Repeat.winfo_height()+gui_vars.interval_y)
+        self.root.update()
+
+	self.entry_water_amount= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3, bg=bgBlue5)
+        self.entry_water_amount.insert(Tkinter.END, "0")
+        self.entry_water_amount.place(x= self.lbl_water_amount.winfo_x()+ self.lbl_water_amount.winfo_width(), y= self.lbl_water_amount.winfo_y())
+        self.root.update()
+
+        self.lbl_water_ml= Tkinter.Label(self.tab_event_schedule, text= 'ml , ' ,font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_ml.place(x= self.entry_water_amount.winfo_x()+ self.entry_water_amount.winfo_width(), y=self.entry_water_amount.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture= Tkinter.Label(self.tab_event_schedule, text= 'Moisture : ', font =myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture.place(x=self.lbl_water_ml.winfo_x()+ self.lbl_water_ml.winfo_width(), y=self.lbl_water_ml.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Min= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Min.insert(Tkinter.END, '0')
+        self.entry_Moisture_Min.place(x= self.lbl_Moisture.winfo_x()+self.lbl_Moisture.winfo_width(), y= self.lbl_Moisture.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Mid= Tkinter.Label(self.tab_event_schedule,  text=' - ', font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Mid.place(x=self.entry_Moisture_Min.winfo_x()+ self.entry_Moisture_Min.winfo_width(), y= self.entry_Moisture_Min.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Max= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Max.insert(Tkinter.END, '50')
+        self.entry_Moisture_Max.place(x= self.lbl_Moisture_Mid.winfo_x()+self.lbl_Moisture_Mid.winfo_width(), y= self.lbl_Moisture_Mid.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Persen= Tkinter.Label(self.tab_event_schedule,  text=' %', font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Persen.place(x=self.entry_Moisture_Max.winfo_x()+ self.entry_Moisture_Max.winfo_width(), y= self.entry_Moisture_Max.winfo_y())
+        self.root.update()
+
         self.btn_Schedule_Go= Tkinter.Button(self.tab_event_schedule, text= 'Go', command= self.run_schedule_1,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, width= btn_width, height= btn_height)
-        self.btn_Schedule_Go.place(x= gui_vars.interval_x * 18, y = self.entry_Repeat.winfo_y()+ self.entry_Repeat.winfo_height()+gui_vars.interval_y)
+        self.btn_Schedule_Go.place(x= gui_vars.interval_x * 18, y = self.lbl_Moisture_Persen.winfo_y()+ self.lbl_Moisture_Persen.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         # Event Schedule 2
@@ -628,67 +685,76 @@ class App:
         self.lbl_schedule_2.place(x= gui_vars.interval_x, y = self.btn_Schedule_Go.winfo_y()+ self.btn_Schedule_Go.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-
-        self.lbl_Action_2= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold)
+        self.lbl_Action_2= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Action_2.place(x= gui_vars.interval_x, y = self.lbl_schedule_2.winfo_y()+ self.lbl_schedule_2.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         Action = ['Watering','Scanning']
         tkvar21.set(Action[0])
         self.entry_Action_2 = OptionMenu(self.tab_event_schedule, tkvar21, *Action)
+        self.entry_Action_2.configure(background=bgBlue5)
         self.entry_Action_2.place(x= self.lbl_Action_2.winfo_x()+self.lbl_Action_2.winfo_width(), y= self.lbl_Action_2.winfo_y()-5)
         self.root.update()
         tkvar21.trace('w', self.change_dropdown21)
 
-        self.lbl_X_Schedule_2= Tkinter.Label(self.tab_event_schedule, text= 'Interval X :',font= myfont12_Bold)
-        self.lbl_X_Schedule_2.place(x= gui_vars.interval_x , y = self.entry_Action_2.winfo_y()+ self.entry_Action_2.winfo_height()+gui_vars.interval_y)
+        self.lbl_Start_2= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Start_2.place(x= gui_vars.interval_x, y = self.entry_Action_2.winfo_y()+ self.entry_Action_2.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.entry_X_Schedule_2= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_X_Schedule_2.insert(Tkinter.END, "0")
-        self.entry_X_Schedule_2.place(x= self.lbl_X_Schedule_2.winfo_x()+ self.lbl_X_Schedule_2.winfo_width(), y= self.lbl_X_Schedule_2.winfo_y())
-        self.root.update()
-
-        self.lbl_Y_Schedule_2= Tkinter.Label(self.tab_event_schedule, text= ', Y :',font= myfont12_Bold)
-        self.lbl_Y_Schedule_2.place(x= self.entry_X_Schedule_2.winfo_x()+ self.entry_X_Schedule_2.winfo_width()+ gui_vars.interval_x, y = self.lbl_X_Schedule_2.winfo_y())
-        self.root.update()
-
-        self.entry_Y_Schedule_2= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_Y_Schedule_2.insert(Tkinter.END, "0")
-        self.entry_Y_Schedule_2.place(x= self.lbl_Y_Schedule_2.winfo_x()+ self.lbl_Y_Schedule_2.winfo_width(), y= self.lbl_Y_Schedule_2.winfo_y())
-        self.root.update()
-
-        self.lbl_water_amount_2= Tkinter.Label(self.tab_event_schedule, text= '| Water :',font= myfont12_Bold)
-        self.lbl_water_amount_2.place(x= self.entry_Y_Schedule_2.winfo_x()+ self.entry_Y_Schedule_2.winfo_width()+ gui_vars.interval_x, y = self.entry_Y_Schedule_2.winfo_y())
-        self.root.update()
-
-	self.entry_water_amount_2= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_water_amount_2.insert(Tkinter.END, "0")
-        self.entry_water_amount_2.place(x= self.lbl_water_amount_2.winfo_x()+ self.lbl_water_amount_2.winfo_width(), y= self.lbl_water_amount_2.winfo_y())
-        self.root.update()
-
-        self.lbl_Start_2= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold)
-        self.lbl_Start_2.place(x= gui_vars.interval_x, y = self.entry_water_amount_2.winfo_y()+ self.entry_water_amount_2.winfo_height()+gui_vars.interval_y)
-        self.root.update()
-
-        self.entry_Time_2= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6)
+        self.entry_Time_2= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6, bg=bgBlue5)
         self.entry_Time_2.insert(Tkinter.END, '00:00')
         self.entry_Time_2.place(x= self.lbl_Start_2.winfo_x()+self.lbl_Start_2.winfo_width(), y= self.lbl_Start_2.winfo_y())
         self.root.update()
 
-        self.lbl_Schedule_comma_2= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold)
+        self.lbl_Schedule_comma_2= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Schedule_comma_2.place(x=self.entry_Time_2.winfo_x()+self.entry_Time_2.winfo_width(),y= self.entry_Time_2.winfo_y())
         self.root.update()
 
         Repeat = ['Every Day', 'Every Hour', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', ' Friday', 'Saturday']
         tkvar22.set(Repeat[0])
         self.entry_Repeat_2 = OptionMenu(self.tab_event_schedule, tkvar22, *Repeat)
+        self.entry_Repeat_2.configure(background=bgBlue5)
         self.entry_Repeat_2.place(x= self.lbl_Schedule_comma_2.winfo_x()+self.lbl_Schedule_comma_2.winfo_width(), y= self.lbl_Schedule_comma_2.winfo_y()-5)
         tkvar22.trace('w', self.change_dropdown22)
         self.root.update()
 
+        self.lbl_water_amount_2= Tkinter.Label(self.tab_event_schedule, text= 'Water :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_amount_2.place(x= gui_vars.interval_x, y = self.entry_Repeat_2.winfo_y()+ self.entry_Repeat_2.winfo_height()+gui_vars.interval_y)
+        self.root.update()
+
+	self.entry_water_amount_2= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3, bg=bgBlue5)
+        self.entry_water_amount_2.insert(Tkinter.END, "0")
+        self.entry_water_amount_2.place(x= self.lbl_water_amount_2.winfo_x()+ self.lbl_water_amount_2.winfo_width(), y= self.lbl_water_amount_2.winfo_y())
+        self.root.update()
+
+        self.lbl_water_ml_2= Tkinter.Label(self.tab_event_schedule, text= 'ml , ' ,font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_ml_2.place(x= self.entry_water_amount_2.winfo_x()+ self.entry_water_amount_2.winfo_width(), y=self.entry_water_amount_2.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_2= Tkinter.Label(self.tab_event_schedule, text= 'Moisture : ', font =myfont12_Bold,bg=bgBlue1)
+        self.lbl_Moisture_2.place(x=self.lbl_water_ml_2.winfo_x()+ self.lbl_water_ml_2.winfo_width(), y=self.lbl_water_ml_2.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Min_2= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Min_2.insert(Tkinter.END, '0')
+        self.entry_Moisture_Min_2.place(x= self.lbl_Moisture_2.winfo_x()+self.lbl_Moisture_2.winfo_width(), y= self.lbl_Moisture_2.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Mid_2= Tkinter.Label(self.tab_event_schedule,  text=' - ', font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Mid_2.place(x=self.entry_Moisture_Min_2.winfo_x()+ self.entry_Moisture_Min_2.winfo_width(), y= self.entry_Moisture_Min_2.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Max_2= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Max_2.insert(Tkinter.END, '50')
+        self.entry_Moisture_Max_2.place(x= self.lbl_Moisture_Mid_2.winfo_x()+self.lbl_Moisture_Mid_2.winfo_width(), y= self.lbl_Moisture_Mid_2.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Persen_2= Tkinter.Label(self.tab_event_schedule, text= ' %' ,font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Persen_2.place(x= self.entry_Moisture_Max_2.winfo_x()+ self.entry_Moisture_Max_2.winfo_width(), y=self.entry_Moisture_Max_2.winfo_y())
+        self.root.update()
+
         self.btn_Schedule_Go_2= Tkinter.Button(self.tab_event_schedule, text= 'Go', command= self.run_schedule_2,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, width= btn_width, height= btn_height)
-        self.btn_Schedule_Go_2.place(x= gui_vars.interval_x * 18, y = self.entry_Repeat_2.winfo_y()+ self.entry_Repeat_2.winfo_height()+gui_vars.interval_y)
+        self.btn_Schedule_Go_2.place(x= gui_vars.interval_x * 18, y = self.lbl_Moisture_Persen_2.winfo_y()+ self.lbl_Moisture_Persen_2.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         # Event Schedule 3
@@ -697,106 +763,120 @@ class App:
         self.root.update()
 
 
-        self.lbl_Action_3= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold)
+        self.lbl_Action_3= Tkinter.Label(self.tab_event_schedule, text= 'Action :',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Action_3.place(x= gui_vars.interval_x, y = self.lbl_schedule_3.winfo_y()+ self.lbl_schedule_3.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         Action = ['Watering','Monitoring']
         tkvar31.set(Action[0])
         self.entry_Action_3 = OptionMenu(self.tab_event_schedule, tkvar31, *Action)
+        self.entry_Action_3.configure(background=bgBlue5)
         self.entry_Action_3.place(x= self.lbl_Action_3.winfo_x()+self.lbl_Action_3.winfo_width(), y= self.lbl_Action_3.winfo_y()-5)
         self.root.update()
         tkvar31.trace('w', self.change_dropdown31)
 
-        self.lbl_X_Schedule_3= Tkinter.Label(self.tab_event_schedule, text= 'Interval X :',font= myfont12_Bold)
-        self.lbl_X_Schedule_3.place(x= gui_vars.interval_x , y = self.entry_Action_3.winfo_y()+ self.entry_Action_3.winfo_height()+gui_vars.interval_y)
+        self.lbl_Start_3= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Start_3.place(x= gui_vars.interval_x, y = self.entry_Action_3.winfo_y()+ self.entry_Action_3.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.entry_X_Schedule_3= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_X_Schedule_3.insert(Tkinter.END, "0")
-        self.entry_X_Schedule_3.place(x= self.lbl_X_Schedule_3.winfo_x()+ self.lbl_X_Schedule_3.winfo_width(), y= self.lbl_X_Schedule_3.winfo_y())
-        self.root.update()
-
-        self.lbl_Y_Schedule_3= Tkinter.Label(self.tab_event_schedule, text= ', Y :',font= myfont12_Bold)
-        self.lbl_Y_Schedule_3.place(x= self.entry_X_Schedule_3.winfo_x()+ self.entry_X_Schedule_3.winfo_width()+ gui_vars.interval_x, y = self.lbl_X_Schedule_3.winfo_y())
-        self.root.update()
-
-        self.entry_Y_Schedule_3= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_Y_Schedule_3.insert(Tkinter.END, "0")
-        self.entry_Y_Schedule_3.place(x= self.lbl_Y_Schedule_3.winfo_x()+ self.lbl_Y_Schedule_3.winfo_width(), y= self.lbl_Y_Schedule_3.winfo_y())
-        self.root.update()
-
-        self.lbl_water_amount_3= Tkinter.Label(self.tab_event_schedule, text= '| Water :',font= myfont12_Bold)
-        self.lbl_water_amount_3.place(x= self.entry_Y_Schedule_3.winfo_x()+ self.entry_Y_Schedule_3.winfo_width()+ gui_vars.interval_x, y = self.entry_Y_Schedule_3.winfo_y())
-        self.root.update()
-
-	self.entry_water_amount_3= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3)
-        self.entry_water_amount_3.insert(Tkinter.END, "0")
-        self.entry_water_amount_3.place(x= self.lbl_water_amount_3.winfo_x()+ self.lbl_water_amount_3.winfo_width(), y= self.lbl_water_amount_3.winfo_y())
-        self.root.update()
-
-        self.lbl_Start_3= Tkinter.Label(self.tab_event_schedule, text= 'Time, Repeat :',font= myfont12_Bold)
-        self.lbl_Start_3.place(x= gui_vars.interval_x, y = self.entry_water_amount_3.winfo_y()+ self.entry_water_amount_3.winfo_height()+gui_vars.interval_y)
-        self.root.update()
-
-        self.entry_Time_3= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6)
+        self.entry_Time_3= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 6, bg=bgBlue5)
         self.entry_Time_3.insert(Tkinter.END, '00:00')
         self.entry_Time_3.place(x= self.lbl_Start_3.winfo_x()+self.lbl_Start_3.winfo_width(), y= self.lbl_Start_3.winfo_y())
         self.root.update()
 
-        self.lbl_Schedule_comma_3= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold)
+        self.lbl_Schedule_comma_3= Tkinter.Label(self.tab_event_schedule, text= ', ', font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Schedule_comma_3.place(x=self.entry_Time_3.winfo_x()+self.entry_Time_3.winfo_width(),y= self.entry_Time_3.winfo_y())
         self.root.update()
 
         Repeat = ['Every Day', 'Every Hour', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', ' Friday', 'Saturday']
         tkvar32.set(Repeat[0])
         self.entry_Repeat_3 = OptionMenu(self.tab_event_schedule, tkvar32, *Repeat)
+        self.entry_Repeat_3.configure(background=bgBlue5)
         self.entry_Repeat_3.place(x= self.lbl_Schedule_comma_3.winfo_x()+self.lbl_Schedule_comma_3.winfo_width(), y= self.lbl_Schedule_comma_3.winfo_y()-5)
         tkvar32.trace('w', self.change_dropdown32)
         self.root.update()
 
+        self.lbl_water_amount_3= Tkinter.Label(self.tab_event_schedule, text= 'Water :',font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_amount_3.place(x= gui_vars.interval_x, y = self.entry_Repeat_3.winfo_y()+ self.entry_Repeat_3.winfo_height()+gui_vars.interval_y)
+        self.root.update()
+
+	self.entry_water_amount_3= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width=3, bg=bgBlue5)
+        self.entry_water_amount_3.insert(Tkinter.END, "0")
+        self.entry_water_amount_3.place(x= self.lbl_water_amount_3.winfo_x()+ self.lbl_water_amount_3.winfo_width(), y= self.lbl_water_amount_3.winfo_y())
+        self.root.update()
+
+        self.lbl_water_ml_3= Tkinter.Label(self.tab_event_schedule, text= 'ml , ' ,font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_water_ml_3.place(x= self.entry_water_amount_3.winfo_x()+ self.entry_water_amount_3.winfo_width(), y=self.entry_water_amount_3.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_3= Tkinter.Label(self.tab_event_schedule, text= 'Moisture : ', font =myfont12_Bold,bg=bgBlue1)
+        self.lbl_Moisture_3.place(x=self.lbl_water_ml_3.winfo_x()+ self.lbl_water_ml_3.winfo_width(), y=self.lbl_water_ml_3.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Min_3= Tkinter.Entry(self.tab_event_schedule,  font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Min_3.insert(Tkinter.END, '0')
+        self.entry_Moisture_Min_3.place(x= self.lbl_Moisture_3.winfo_x()+self.lbl_Moisture_3.winfo_width(), y= self.lbl_Moisture_3.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Mid_3= Tkinter.Label(self.tab_event_schedule,  text=' - ', font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Mid_3.place(x=self.entry_Moisture_Min_3.winfo_x()+ self.entry_Moisture_Min_3.winfo_width(), y= self.entry_Moisture_Min_3.winfo_y())
+        self.root.update()
+
+        self.entry_Moisture_Max_3= Tkinter.Entry(self.tab_event_schedule, font= myfont12_Bold, width= 3, bg=bgBlue5)
+        self.entry_Moisture_Max_3.insert(Tkinter.END, '50')
+        self.entry_Moisture_Max_3.place(x= self.lbl_Moisture_Mid_3.winfo_x()+self.lbl_Moisture_Mid_3.winfo_width(), y= self.lbl_Moisture_Mid_3.winfo_y())
+        self.root.update()
+
+        self.lbl_Moisture_Persen_3= Tkinter.Label(self.tab_event_schedule, text= ' %' ,font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Moisture_Persen_3.place(x= self.entry_Moisture_Max_3.winfo_x()+ self.entry_Moisture_Max_3.winfo_width(), y=self.entry_Moisture_Max_3.winfo_y())
+        self.root.update()
+
         self.btn_Schedule_Go_3= Tkinter.Button(self.tab_event_schedule, text= 'Go', command= self.run_schedule_3,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, width= btn_width, height= btn_height)
-        self.btn_Schedule_Go_3.place(x= gui_vars.interval_x * 18, y = self.entry_Repeat_3.winfo_y()+ self.entry_Repeat_3.winfo_height()+gui_vars.interval_y)
+        self.btn_Schedule_Go_3.place(x= gui_vars.interval_x * 18, y = self.lbl_Moisture_Persen_3.winfo_y()+ self.lbl_Moisture_Persen_3.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
         # ==================================================
         # [TAB DATABASE PLANTING]
         # ==================================================
+        self.Bg_DB_Planting = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 10, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_DB_Planting.place(x= gui_vars.interval_x -4, y= gui_vars.interval_y -4 )
+    	self.root.update()
+
         self.lbl_planting = Tkinter.Label(self.tab_planting, text="INPUT PLANTING", font= myfont14_Bold, width= 30, fg= 'white', activeforeground='white', bg= bgGray, activebackground= bgGray_active) #, command= self.show_hide_Event_Schedule1
         self.lbl_planting.place(x= gui_vars.interval_x , y= gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_name_plant = Tkinter.Label(self.tab_planting, text= 'Name Plant     : ',font= myfont12_Bold)
+        self.lbl_name_plant = Tkinter.Label(self.tab_planting, text= 'Name Plant     : ',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_name_plant.place(x= gui_vars.interval_x , y = self.lbl_planting.winfo_y()+ self.lbl_planting.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
-        self.entry_name_plant = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=14, textvariable = NAME_PLANT)
+        self.entry_name_plant = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=14, textvariable = NAME_PLANT, bg=bgBlue5)
         self.entry_name_plant.place(x= self.lbl_name_plant.winfo_x()+ self.lbl_name_plant.winfo_width(), y= self.lbl_name_plant.winfo_y())
         self.root.update()
 
-        self.lbl_location_planting_X = Tkinter.Label(self.tab_planting, text="Location X, Y : ", font=myfont12_Bold)
+        self.lbl_location_planting_X = Tkinter.Label(self.tab_planting, text="Location X, Y : ", font=myfont12_Bold, bg=bgBlue1)
         self.lbl_location_planting_X.place(x= gui_vars.interval_x, y=self.entry_name_plant.winfo_y()+ self.entry_name_plant.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
-        self.entry_location_planting_X = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=6, textvariable= LOCATION_PLANT_X)
+        self.entry_location_planting_X = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=6, textvariable= LOCATION_PLANT_X, bg=bgBlue5)
         self.entry_location_planting_X.insert(Tkinter.END, "0")
         self.entry_location_planting_X.place(x= self.lbl_location_planting_X.winfo_x()+ self.lbl_location_planting_X.winfo_width(), y= self.lbl_location_planting_X.winfo_y())
         self.root.update()
 
-        self.lbl_location_planting_Y = Tkinter.Label(self.tab_planting, text= ' , ',font= myfont12_Bold)
+        self.lbl_location_planting_Y = Tkinter.Label(self.tab_planting, text= ' , ',font= myfont12_Bold, bg=bgBlue1)
         self.lbl_location_planting_Y.place(x= self.entry_location_planting_X.winfo_x()+ self.entry_location_planting_X.winfo_width(), y = self.lbl_location_planting_X.winfo_y())
         self.root.update()
 
-        self.entry_location_planting_Y = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=6, textvariable = LOCATION_PLANT_Y)
+        self.entry_location_planting_Y = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width=6, textvariable = LOCATION_PLANT_Y, bg=bgBlue5)
         self.entry_location_planting_Y.insert(Tkinter.END, "0")
         self.entry_location_planting_Y.place(x= self.lbl_location_planting_Y.winfo_x()+ self.lbl_location_planting_Y.winfo_width(), y= self.lbl_location_planting_X.winfo_y())
         self.root.update()
 
-        self.lbl_note_plant = Tkinter.Label(self.tab_planting, text = 'Note Plant      :', font = myfont12_Bold )
+        self.lbl_note_plant = Tkinter.Label(self.tab_planting, text = 'Note Plant      :', font = myfont12_Bold , bg=bgBlue1)
         self.lbl_note_plant.place(x= gui_vars.interval_x, y=self.entry_location_planting_Y.winfo_y() + self.entry_location_planting_Y.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
-        self.entry_note_plant = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width =18, textvariable = NOTE_PLANT)
+        self.entry_note_plant = Tkinter.Entry(self.tab_planting, font= myfont12_Bold, width =18, textvariable = NOTE_PLANT, bg=bgBlue5)
         self.entry_note_plant.insert(Tkinter.END, "")
         self.entry_note_plant.place(x= self.lbl_note_plant.winfo_x()+ self.lbl_note_plant.winfo_width(), y= self.lbl_note_plant.winfo_y())
         self.root.update()
@@ -820,20 +900,24 @@ class App:
         # ==================================================
         # [TAB IMAGE PROCASSING]
         # ==================================================
+        self.Bg_Image_Pro = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 6, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_Image_Pro.place(x= gui_vars.interval_x -4, y = self.btn_UpdateButton.winfo_y()+ self.btn_UpdateButton.winfo_height()+gui_vars.interval_y*3)
+    	self.root.update()
+
         self.lbl_image_process= Tkinter.Label(self.tab_planting, text="Image Processing", font= myfont14_Bold, width= 30, fg= 'white', activeforeground='white', bg= bgGray)# command= self.show_hide_Event_Schedule3)
-        self.lbl_image_process.place(x= gui_vars.interval_x, y = self.btn_UpdateButton.winfo_y()+ self.btn_UpdateButton.winfo_height()+gui_vars.interval_y)
+        self.lbl_image_process.place(x= gui_vars.interval_x, y = self.btn_UpdateButton.winfo_y()+ self.btn_UpdateButton.winfo_height()+gui_vars.interval_y*4)
         self.root.update()
 
-        self.btn_saveImg= Tkinter.Button(self.tab_planting, text='Save Image', command= self.btn_saveImg_click,font= myfont14, width= btn_width, height= btn_height)
-        self.btn_saveImg.place(x= gui_vars.interval_x *7, y= self.lbl_image_process.winfo_y()+ self.lbl_image_process.winfo_height()+ gui_vars.interval_y)
+        self.btn_saveImg= Tkinter.Button(self.tab_planting, text='Save Image', command= self.btn_saveImg_click,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
+        self.btn_saveImg.place(x= gui_vars.interval_x *5, y= self.lbl_image_process.winfo_y()+ self.lbl_image_process.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
-        self.btn_loadImg= Tkinter.Button(self.tab_planting, text='Load Image', command= self.btn_loadImg_click, font= myfont14, width=btn_width, height=btn_height)
+        self.btn_loadImg= Tkinter.Button(self.tab_planting, text='Load Image', command= self.btn_loadImg_click, font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
         self.btn_loadImg.place(x= self.btn_saveImg.winfo_x() + self.btn_saveImg.winfo_reqwidth()+ gui_vars.interval_x, y=self.btn_saveImg.winfo_y())
         self.root.update()
 
-        self.btn_Plant_Detection= Tkinter.Button(self.tab_planting, text='Plant Detection', command= self.Plant_Detection_Go,font= myfont14, width= btn_width + 5 , height= btn_height)
-        self.btn_Plant_Detection.place(x= gui_vars.interval_x*12, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y)
+        self.btn_Plant_Detection= Tkinter.Button(self.tab_planting, text='Plant Detection', command= self.Plant_Detection_Go,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
+        self.btn_Plant_Detection.place(x= gui_vars.interval_x*14, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
 
@@ -1010,7 +1094,6 @@ class App:
             self.ArdMntr.set_Acceleration(self.Acceleration[0],'x')
             self.ArdMntr.set_Acceleration(self.Acceleration[1],'y')
             self.ArdMntr.set_Acceleration(self.Acceleration[2],'z')
-
 
 
 
@@ -1279,21 +1362,20 @@ class App:
                 #Z_Target= int(self.entry_Z_Schedule.get())
                 if self.num_schedule == 1:
                     self.get_Action = tkvar11.get()
-                    self.get_X_Pos = self.entry_X_Schedule.get()
-                    self.get_Y_Pos = self.entry_Y_Schedule.get()
                     self.get_amount_water = int(self.entry_water_amount.get())
+                    self.get_Moisture_Min = int(self.entry_Moisture_Min.get())
+                    self.get_Moisture_Max = int(self.entry_Moisture_Max.get())
                 if self.num_schedule == 2:
                     self.get_Action = tkvar12.get()
-                    self.get_X_Pos = self.entry_X_Schedule_2.get()
-                    self.get_Y_Pos = self.entry_Y_Schedule_2.get()
                     self.get_amount_water = int(self.entry_water_amount_2.get())
+                    self.get_Moisture_Min = int(self.entry_Moisture_Min_2.get())
+                    self.get_Moisture_Max = int(self.entry_Moisture_Max_2.get())
                 else:
                     self.num_schedule == 3
                     self.get_Action = tkvar31.get()
-                    self.get_X_Pos  = self.entry_X_Schedule_3.get()
-                    self.get_Y_Pos  = self.entry_Y_Schedule_3.get()
                     self.get_amount_water = int(self.entry_water_amount_3.get())
-
+                    self.get_Moisture_Min = int(self.entry_Moisture_Min_3.get())
+                    self.get_moisture_Max = int(self.entry_Moisture_Max_3.get())
 
                 if self.get_Action == 'Watering' :
                     #for Watering 1 Location
@@ -1319,13 +1401,12 @@ class App:
                         self.input_Zpos= int(self.entry_Zpos.get())
                         print 'Start Watering'
                         try:
-                            self.scan_X= [int(self.entry_1stXpos.get()), int(self.get_X_pos), int(self.entry_ScanAmount_X.get())]
-                            self.scan_Y= [int(self.entry_1stYpos.get()), int(self.get_Y_Pos), int(self.entry_ScanAmount_Y.get())]
-                            #print '### ', self.scan_X, self.scan_Y
+                            self.scan_X= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
+                            self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
 
                             self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
                             if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
-                                self.StartScan_judge= True
+                                #self.StartScan_judge= True
 
                                 #=================================
                                 # New Thread of Watering process
@@ -1373,7 +1454,7 @@ class App:
 
                             self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
                             if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
-                                self.StartScan_judge= True
+                                #self.StartScan_judge= True
 
                                 #self.saveTimeIndex= datetime.now().strftime("%Y%m%d%H%M%S")
                                 self.saveTimeIndex= datetime.now().strftime('%Y%m%d%H%M%S')
@@ -1387,10 +1468,7 @@ class App:
                                 print '*** scanning...'
                                 self.Lock_tabcontrol(True)
                                 self.Lock_Menubar(True)
-
                                 self.tabbox.tab(self.tab_loadscript, state='disable')
-
-
                                 self.btn_StartScan.config(text= 'Stop Scan', fg='white', activeforeground= 'white', bg= self.bgRed, activebackground= self.bgRed_active)
                                 self.root.update()
                             else:
@@ -1450,7 +1528,7 @@ class App:
         if self.ArdMntr.connect== True:
             Soil_Data = self.ArdMntr.cmd_state.strSoil + '%'
         else:
-            Soil_Data = 'Get Soil Data Fail'
+            Soil_Data = '0 %'
         self.btn_Soil_Data.config(text= Soil_Data)
         self.btn_Soil_Data.after(10, self.Soil_callback)
 
@@ -2158,37 +2236,32 @@ class App:
                     self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
                     self.set_mergeframe_size(self.scan_X[2], self.scan_Y[2])
                     self.reset_mergeframe()
-                    #print '### ', self.scan_X, self.scan_Y
+                    print '### ', self.scan_X, self.scan_Y
 
                     self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
                     if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
                         self.StartScan_judge= True
-
                         #self.saveTimeIndex= datetime.now().strftime("%Y%m%d%H%M%S")
-                        self.saveTimeIndex= datetime.now().strftime('%Y%m%d%H%M%S')
-
+                        #self.saveTimeIndex= datetime.now().strftime('%Y%m%d%H%M%S')
                         #=================================
                         # New Thread of Scanning process
                         #================================
                         self.thread_scanning= threading.Thread(target= self.scanning_run)
                         self.thread_scanning.start()
-
                         print '*** scanning...'
-                    	self.Lock_tabcontrol(True)
-                        self.Lock_Menubar(True)
-
                         self.tabbox.tab(self.tab_loadscript, state='disable')
-
-
                         self.btn_StartScan.config(text= 'Stop Scan', fg='white', activeforeground= 'white', bg= self.bgRed, activebackground= self.bgRed_active)
+                        self.root.update()
+
+                        self.Lock_tabcontrol(True)
+                        self.Lock_Menubar(True)
                         self.root.update()
                     else:
                         tkMessageBox.showerror("Error", "The scanning of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1]))
                 except:
-                    tkMessageBox.showerror('Error', 'Please enter nubmer')
+                        tkMessageBox.showerror('Error', 'Please enter nubmer')
             else:
                 tkMessageBox.showerror("Error", "Arduino connection refused!")
-
 
     def btn_saveImg_click(self):
         #self.saveImg= True
@@ -2197,8 +2270,6 @@ class App:
         self.singleframe = self.CamMntr.get_frame()
         self.saveImg_function(self.singleframe, gui_vars.savePath, self.imagename)
         self.display_panel_singleframe(self.singleframe)
-
-
 
     def btn_loadImg_click(self):
         dir_name, file_name = os.path.split(__file__)
@@ -2218,6 +2289,15 @@ class App:
                 Load_Image = pd.DataFrame([['38', 'Load Image' , 'True', 'False', 'Failed']], index=['38'])
                 Load_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=38, startcol= 0)
                 writer.save()
+
+    def btn_Home_click(self):
+        Home = 'G28'
+        self.ArdMntr.serial_send(Home)
+
+    def btn_Moisture_click(self):
+        if self.ArdMntr.connect:
+            self.ArdMntr.switch_Moisture(not(self.ArdMntr.MoistureOn))
+
 
 
     def btn_MoveTo_click(self):
@@ -2376,39 +2456,22 @@ class App:
 
     # Function Scanning
     def scanning_run(self):
-
+        step=0
         #while self.scanning_judge:
         if self.StartScan_judge:
             print '>>> Scanning...'
-
-            if self.StartScan_judge == False:
-                self.btn_StartScan.config(text= 'Start Scan', fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
-                self.root.update()
-            else:
-                self.btn_StartScan.config(text='Stop Scan', fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed_active)
-                self.root.update()
-            step=0
             for step_X in range(0, self.scan_X[2]):
-                if step_X < 1 :
-                    self.after_1 = 0
-                else :
-                    self.after_1 = 1
                 for step_Y in range(0, self.scan_Y[2]):
                     if self.StartScan_judge== False:
                         break
-
-                    if step_X % 2 == 0:
-                        tmp_step_Y = step_Y
-
+                    if step_X % 2 ==0:
+                        tmp_step_Y= step_Y
                     else:
-                        tmp_step_Y = self.scan_Y[2]- step_Y - 1
-
-                    tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1] *2  , self.scan_Y[0]+ tmp_step_Y * self.scan_Y[1] *2
-                    #tmp_X, tmp_Y= self.scan_X[0] + step_X * self.scan_X[1], self.scan_Y[0] + step_Y * self.scan_Y[1]
-
+                        tmp_step_Y= self.scan_Y[2]- step_Y-1
+                    tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ tmp_step_Y*self.scan_Y[1]
+                    #tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1]
                     print '>> X, Y: ', tmp_X, ', ', tmp_Y
-
-                    #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X * self.scan_X[1], self.scan_Y[0]+ step_Y * self.scan_Y[1])
+                    #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1])
                     self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
                     time.sleep(1)
                     while 1:
@@ -2418,16 +2481,15 @@ class App:
                             #self.saveScanning= self.ArdMntr.cmd_state.strCurX+'_'+self.ArdMntr.cmd_state.strCurY
                             self.saveScanning= '{0}_{1}'.format(tmp_X, tmp_Y)
                             frame= self.CamMntr.get_frame()
-                            self.saveImg_function(frame, gui_vars.saveScanningPath,self.readmergeframeIndex+'_'+self.saveTimeIndex+'_'+self.saveScanning)
-
+                            #self.saveImg_function(frame, gui_vars.saveScanningPath,self.readmergeframeIndex+'_'+self.saveTimeIndex+'_'+self.saveScanning)
                             result= frame.copy()
                             self.display_panel_singleframe(result)
                             #self.display_panel_mergeframe(result, step_X, step_Y)
                             #self.display_panel_mergeframe(result, step_Y, step_X)
 
                             #self.display_panel_mergeframe(result, tmp_step_Y, step_X)
-                            self.display_panel_mergeframe(result, tmp_step_Y, self.scan_X[2] - 1 - step_X)   #2018.02.12
-                            #print '>> display_panel X, Y: ', tmp_step_Y, ', ', self.scan_X[2] - 1 - step_X   #2018.02.12
+                            self.display_panel_mergeframe(result, tmp_step_Y, self.scan_X[2] - 1 - step_X)   	#2018.02.12
+                            #print '>> display_panel X, Y: ', tmp_step_Y, ', ', self.scan_X[2] - 1 - step_X   	#2018.02.12
 
                             print self.saveScanning
                             #time.sleep(2)
@@ -2437,11 +2499,13 @@ class App:
                     if self.StartScan_judge== False:
                         break
                     step= step+1
+            self.btn_StartScan.config(text= 'Start Scan', fg='white', activeforeground='white', bg= self.bgGreen, activebackground= self.bgGreen_active)
+            self.root.update()
+            self.tabbox.tab(self.tab_loadscript, state='normal')
             self.StartScan_judge= False
             self.Lock_tabcontrol(False)
             self.Lock_Menubar(False)
-            self.tabbox.tab(self.tab_loadscript, state='normal')
-            self.btn_StartScan.config(text= 'Start Scan', fg='white', activeforeground='white', bg= self.bgGreen, activebackground= self.bgGreen_active)
+
         else:
             time.sleep(0.2)
             step=0
@@ -2535,8 +2599,9 @@ class App:
                     soil_data = float(self.ArdMntr.cmd_state.strSoil)
                     print('Test Soil :')
                     print(soil_data)
-
-                    if soil_data < 80 :
+                    soil_min = self.get_Moisture_Min
+                    soil_max = self.get_Moisture_Max
+                    if soil_data > soil_min and soil_data < soil_max :
                         cmd = 'F02 N{0}'.format(self.get_amount_water)
                         print(self.get_amount_water, 'ml')
                         self.serial_send(cmd)
@@ -2575,29 +2640,9 @@ class App:
 
         str_imagePath = tkFileDialog.askopenfilename(title = "Select image",initialdir=dir_name, filetypes = (("jpeg files","*.jpg"), ("png files","*.png"), ("tif files","*.tif"),("all files","*.*")))
 
+
         GUI = PlantDetectionGUI(image_filename= str_imagePath, plant_detection= PlantDetection)
         GUI.run()
-
-
-
-    @staticmethod
-    def hsv_trackbar_name(parameter, bound):
-        """Create GUI trackbar name."""
-        if parameter == 'H':
-            parameter = 'Hue'
-        if parameter == 'S':
-            parameter = 'Saturation'
-        if parameter == 'V':
-            parameter = 'Value'
-        return '{} {} {}'.format(parameter, bound, ' ' * (12 - len(parameter)))
-
-    def _get_hsv_values(self):
-        # get HSV values from sliders in HSV window
-        for bound_num, bound in enumerate(['min', 'max']):
-            for parameter in range(0, 3):
-                self.hsv_bounds[bound_num][parameter] = cv2.getTrackbarPos(
-                    self.hsv_trackbar_name('HSV'[parameter], bound),
-                    self.hsv_window)
 
 
     def change_dropdown11(*args):

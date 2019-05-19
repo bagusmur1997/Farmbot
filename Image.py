@@ -7,6 +7,7 @@ import sys
 import os
 import numpy as np
 import cv2
+from Capture import Capture
 from CeleryPy import log
 
 CIRCLE_LINEWIDTH = 3
@@ -37,6 +38,13 @@ class Image(object):
             os.path.dirname(
                 os.path.realpath(__file__))[:-(len('plant_detection') + 1)]
             + os.sep)
+
+    def status(self):
+        """Get state of images."""
+        status = {}
+        for name, image in self.images.items():
+            status[name] = bool(image is not None)
+        return status
 
     def _reduce(self):
         height, width = self.images['original'].shape[:2]
@@ -78,6 +86,19 @@ class Image(object):
         self.image_name = os.path.splitext(os.path.basename(filename))[0]
         self._prepare()
 
+    def capture(self):
+        """Capture image from camera."""
+        image_filename = Capture().capture()
+        self.plant_db.getcoordinates()
+        self.images['original'] = self.load(image_filename)
+
+    def download(self, image_id):
+        """Download an image from the FarmBot Web App API."""
+        image_filename = self.plant_db.get_image(image_id)
+        if image_filename is None:
+            raise IOError("Image download failed.")
+        self.load(image_filename)
+        os.remove(image_filename)
 
     def save(self, title, image=None):
         """Save image to file."""
