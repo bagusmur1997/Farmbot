@@ -18,7 +18,6 @@ import types
 from GUI import PlantDetectionGUI
 from PlantDetection import PlantDetection
 
-
 from tkcalendar import Calendar, DateEntry
 
 import Tkinter as ttk
@@ -51,7 +50,9 @@ from class_ConfigSetting import ConfigSetting
 
 from dialog_PeripheralSetting import PeripheralSetting
 from dialog_MotorSetting import MotorSetting
+from dialog_Tools_Setting import ToolsSetting
 from dialog_CameraConnection import CameraConnection
+from dialog_Tools_Setting_1 import ToolSetting
 import utils_tool
 
 import os
@@ -65,8 +66,8 @@ from pandas import ExcelFile
 import numpy as np
 
 from Farmbot_test_excel import *
-
 class App:
+
     # Ininitalization
 
     def __init__(self, root):
@@ -118,6 +119,7 @@ class App:
 
         self.config= ConfigSetting(gui_vars.saveParaPath, gui_vars.configName, gui_vars.defaultDict)
         params= self.config.read_json()
+
         self.threshold_graylevel= params['thrshd_gray']
         self.threshold_MinSize= params['thrshd_Minsize']
         self.threshold_MaxSize= params['thrshd_Maxsize']
@@ -130,10 +132,27 @@ class App:
         self.Peripheral_para= params['Peripheral Setting']
         self.rdbtnMvAmount_Mode= params['Move Amount type (5 types)']
         self.scriptPath= params['script Path']
+        self.Seed_Tool_Setting= params['Seed Tool Setting']
+        self.Water_Tool_Setting= params['Water Tool Setting']
+        self.Tool_Setting_para= params['Tools Setting']
 
+        #Pin Number Peripheral
         self.pinNumb_fan = 8
-        self.pinNumb_water = 9
-        self.pinNumb_seed = 10
+        self.pinNumb_water = 10
+        self.pinNumb_seed = 9
+
+        #self.Numb_X_Water
+
+        #Location Seed Tools
+        self.Loc_Seed_X = 0
+        self.Loc_Seed_Y = 0
+        self.Loc_Seed_Z = 0
+
+        #Location Water Tools
+        self.Loc_Water_X = 0
+        self.Loc_Water_Y = 0
+        self.Loc_Water_Z = 0
+
         self.num_schedule = 0
 
         self.get_X_pos = 0
@@ -143,21 +162,41 @@ class App:
         #for key, value in params['Peripheral Setting']:
         for key, value in self.Peripheral_para:		#2018.02.28
             print key, value	#2018.02.28
-            if key.strip().replace(' ','').lower() == 'waterpump':	# is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Water Pump':	# is -> == 2018.02.28
                 self.pinNumb_water= value
                 print 'pinNumb_water: ', self.pinNumb_water		#2018.02.28
-            if key.strip().replace(' ','').lower() == 'vaccumpump':	# is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Vaccum Pump':	# is -> == 2018.02.28
                 self.pinNumb_seed= value
                 print 'pinNumb_seed: ', self.pinNumb_seed		#2018.02.28
-            if key.strip().replace(' ','').lower() == 'fan':		# is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Fan':		# is -> == 2018.02.28
 		self.pinNumb_fan= value
 		print 'pinNumb_fan: ', self.pinNumb_fan			#2018.02.28
-
         print 'Pin Value: ',self.Peripheral_para	#2018.02.28
+
+        for key, valuex, valuey, valuez in self.Tool_Setting_para:
+            print key, valuex, valuey, valuez
+            if key == 'Tool Seeding':
+                self.Loc_Seed_X= valuex
+                self.Loc_Seed_Y= valuey
+                self.Loc_Seed_Z= valuez
+                print 'Location X Seeding Tool:', self.Loc_Seed_X
+                print 'Location Y Seeding Tool:', self.Loc_Seed_Y
+                print 'Location Z Seeding Tool:', self.Loc_Seed_Z
+            if key == 'Tool Watering':
+                self.Loc_Water_X= valuex
+                self.Loc_Water_Y= valuey
+                self.Loc_Water_Z= valuez
+                print 'Location X Watering Tool:', self.Loc_Water_X
+                print 'Location Y Watering Tool:', self.Loc_Water_Y
+                print 'Location Y Watering Tool:', self.Loc_Water_Z
+        print 'Location Tools: ',self.Tool_Setting_para
+        print 'Location Watering Tool: ', self.Loc_Water_X, self.Loc_Water_Y, self.Loc_Water_Z
+        print 'Location Seeding Tool: ', self.Loc_Seed_X, self.Loc_Seed_Y, self.Loc_Seed_Z
 
         self.checkmouse_panel_mergeframe= False
         self.x1, self.y1, self.x2, self.y2= -1,-1,-1,-1
         self.StartScan_judge= False
+        self.Scheduling_judge= False
         self.StartRunScript_judge= False
         self.saveScanning= 'XXX'
         self.strStatus= 'Idling...'
@@ -190,6 +229,7 @@ class App:
         self.menubar.add_cascade(label="Setting", underline=0, menu=self.SettingMenu)
         self.SettingMenu.add_command(label= "Peripheral Setting", command= self.set_Peripheral)
         self.SettingMenu.add_command(label= "Motor Setting", command= self.set_Motor)
+        self.SettingMenu.add_command(label = "Tools Setting", command= self.set_Tool_1)
         self.ConnectMenu = Tkinter.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Communication", underline= 0, menu=self.ConnectMenu)
         self.ConnectMenu.add_command(label="Connect to Arduino", command=self.set_ArdConnect)
@@ -237,7 +277,7 @@ class App:
         self.tabbox.add(self.tab_control, text="CONTROL")
         self.tabbox.add(self.tab_loadscript, text="SCRIPT")
         self.tabbox.add(self.tab_event_schedule, text="SCHEDULE")
-        self.tabbox.add(self.tab_planting, text="PLANT & IMAGE")
+        self.tabbox.add(self.tab_planting, text="PLANT & OTHERS")
 
 	   #self.tabbox.place(x= 0, y= 0)
         self.tabbox.place(x= 0, y= self.lbl_CurrPos.winfo_y()+ self.lbl_CurrPos.winfo_reqheight()+ gui_vars.interval_y)
@@ -555,7 +595,7 @@ class App:
         self.lbl_Soil_Data.place(x= self.btn_Indi_Light.winfo_x()+ self.btn_Indi_Light.winfo_width() + gui_vars.interval_x*3, y= self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+ gui_vars.interval_y )
         self.root.update()
 
-        self.btn_Soil_Data = Tkinter.Label(self.tab_control, text='0%', font= myfont12_Bold, width=5, height=1, fg= 'black', bg=bgBlue)
+        self.btn_Soil_Data = Tkinter.Label(self.tab_control, text='0 %', font= myfont12_Bold, width=5, height=1, fg= 'white', bg=bgBlue3)
         self.btn_Soil_Data.place(x= self.lbl_Soil_Data.winfo_x()+ self.lbl_Soil_Data.winfo_width(), y=self.btn_Indi_Seed.winfo_y()+ self.btn_Indi_Seed.winfo_height()+gui_vars.interval_y)
         self.root.update()
 
@@ -900,7 +940,7 @@ class App:
         # ==================================================
         # [TAB IMAGE PROCASSING]
         # ==================================================
-        self.Bg_Image_Pro = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 6, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+        self.Bg_Image_Pro = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 4, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
     	self.Bg_Image_Pro.place(x= gui_vars.interval_x -4, y = self.btn_UpdateButton.winfo_y()+ self.btn_UpdateButton.winfo_height()+gui_vars.interval_y*3)
     	self.root.update()
 
@@ -909,17 +949,39 @@ class App:
         self.root.update()
 
         self.btn_saveImg= Tkinter.Button(self.tab_planting, text='Save Image', command= self.btn_saveImg_click,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
-        self.btn_saveImg.place(x= gui_vars.interval_x *5, y= self.lbl_image_process.winfo_y()+ self.lbl_image_process.winfo_height()+ gui_vars.interval_y)
-        self.root.update()
-
-        self.btn_loadImg= Tkinter.Button(self.tab_planting, text='Load Image', command= self.btn_loadImg_click, font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
-        self.btn_loadImg.place(x= self.btn_saveImg.winfo_x() + self.btn_saveImg.winfo_reqwidth()+ gui_vars.interval_x, y=self.btn_saveImg.winfo_y())
+        self.btn_saveImg.place(x= gui_vars.interval_x * 2, y= self.lbl_image_process.winfo_y()+ self.lbl_image_process.winfo_height()+ gui_vars.interval_y)
         self.root.update()
 
         self.btn_Plant_Detection= Tkinter.Button(self.tab_planting, text='Plant Detection', command= self.Plant_Detection_Go,font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active)
-        self.btn_Plant_Detection.place(x= gui_vars.interval_x*14, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y)
+        self.btn_Plant_Detection.place(x= self.btn_saveImg.winfo_x() + self.btn_saveImg.winfo_reqwidth()+ gui_vars.interval_x, y=self.btn_saveImg.winfo_y())
         self.root.update()
 
+        # ==================================================
+        # [TAB LOADING TOOLS]
+        # ==================================================
+        self.Bg_Image_Load = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 5, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_Image_Load.place(x= gui_vars.interval_x -4, y = self.btn_saveImg.winfo_y()+ self.btn_saveImg.winfo_height()+gui_vars.interval_y * 4)
+    	self.root.update()
+
+        self.lbl_LU_Tools= Tkinter.Label(self.tab_planting, text="Loading / Unloading Tools", font= myfont14_Bold, width= 30, fg= 'white', activeforeground='white', bg= bgGray)# command= self.show_hide_Event_Schedule3)
+        self.lbl_LU_Tools.place(x= gui_vars.interval_x, y = self.btn_saveImg.winfo_y()+ self.btn_saveImg.winfo_height()+gui_vars.interval_y*5)
+        self.root.update()
+
+        self.lbl_Tool_Seed= Tkinter.Label(self.tab_planting, text="Tool Seeding   :", font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Tool_Seed.place(x= gui_vars.interval_x * 2, y= self.lbl_LU_Tools.winfo_y() + self.lbl_LU_Tools.winfo_height() + gui_vars.interval_y * 2)
+        self.root.update()
+
+        self.btn_Tool_Seed= Tkinter.Button(self.tab_planting, text= 'Load', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.btn_Load_Seed_click)
+        self.btn_Tool_Seed.place(x= self.lbl_Tool_Seed.winfo_x() + self.lbl_Tool_Seed.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Seed.winfo_y() - gui_vars.interval_y)
+        self.root.update()
+
+        self.lbl_Tool_Water= Tkinter.Label(self.tab_planting, text="Tool Watering  :", font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Tool_Water.place(x= gui_vars.interval_x * 2, y= self.lbl_Tool_Seed.winfo_y() + self.lbl_Tool_Seed.winfo_height() + gui_vars.interval_y * 2 )
+        self.root.update()
+
+        self.btn_Tool_Water= Tkinter.Button(self.tab_planting, text= 'Load', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.btn_Load_Water_click)
+        self.btn_Tool_Water.place(x= self.lbl_Tool_Water.winfo_x() + self.lbl_Tool_Water.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Water.winfo_y() - gui_vars.interval_y)
+        self.root.update()
 
         '''self.lbl_green_plant_detect= Tkinter.Label(self.tab_planting, text="Detect Green Plant", font= myfont14_Bold)
         self.lbl_green_plant_detect.place(x= gui_vars.interval_x, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y + 5)
@@ -1083,6 +1145,7 @@ class App:
         self.thread_main.start()
 
         self.scanning_judge= True
+
         #self.thread_scanning= threading.Thread(target= self.scanning_run)
         #self.thread_scanning= class_MyThread.Thread(self.scanning_run)
         #self.thread_scanning.start()
@@ -1168,6 +1231,12 @@ class App:
     	db.execute("insert into Plant_Database (Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, Age_Plant, Note_Plant) values (?,?,?,datetime('now', 'localtime'),0,0,?)",
                     [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get()])
     	db.commit()
+        time.sleep(5)
+        Target_X= LOCATION_PLANT_X.get()
+        Target_Y= LOCATION_PLANT_Y.get()
+        Target_Z= LOCATION_PLANT_Z.get()
+        self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
+        time.sleep(1)
 
     def Viewall(self):
         global tree
@@ -1227,9 +1296,6 @@ class App:
 
     def store_para(self, arg_filepath, arg_filename):
         saveDict={}
-        saveDict['thrshd_gray']= self.scale_threshold_graylevel.get()
-        saveDict['thrshd_Minsize']= self.scale_threshold_MinSize.get()
-        saveDict['thrshd_Maxsize']= self.scale_threshold_MaxSize.get()
         saveDict['Scan_X (Beg,Interval,Amount)']= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
         saveDict['Scan_Y (Beg,Interval,Amount)']= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
         saveDict['limit Maximum (X,Y)']= self.limit
@@ -1239,6 +1305,9 @@ class App:
         saveDict['Peripheral Setting']= self.Peripheral_para
         saveDict['Move Amount type (5 types)']= self.rdbtnMvAmount_Mode
         saveDict['script Path']= self.scriptPath
+        saveDict['Seed Tool Setting']= self.Seed_Tool_Setting
+        saveDict['Water Tool Setting']= self.Water_Tool_Setting
+        saveDict['Tools Setting']=  self.Tool_Setting_para
         self.config.write_json(saveDict)
         print "Para set"
 
@@ -1336,50 +1405,57 @@ class App:
 
     def schedule_1(self):
         self.num_schedule = 1
-        self.job_that_executes_once
         print('Schedule 1')
+        if self.Scheduling_judge:
+            #===================================
+            # Delete Scanning Thread
+            #===================================
+            self.Scheduling_judge= False
+            del(self.thread_scheduling)
+        else:
+            self.thread_scheduling= threading.Thread(target= self.scheduling_run)
+            self.thread_scheduling.start()
+            self.Scheduling_judge= True
 
     def schedule_2(self):
         self.num_schedule = 2
-        self.job_that_executes_once
+        self.scheduling_run
         print('Schedule 2')
 
     def schedule_3(self):
         self.num_schedule = 3
-        self.job_that_executes_once
+        self.scheduling_run
         print('Schedule_3')
 
-    def job_that_executes_once(self):
-        # Do some work ...
-        #print("I'm only going to run once!")
+    def scheduling_run(self):
+        print('Schedule Work', self.num_schedule)
         if self.ArdMntr.connect:
-            try:
-                #X_home = 0
-                #Y_home = 0
-                #Z_home = 0
-                #X_Target= int(self.entry_X_Schedule.get())
-                #Y_Target= int(self.entry_Y_Schedule.get())
-                #Z_Target= int(self.entry_Z_Schedule.get())
-                if self.num_schedule == 1:
-                    self.get_Action = tkvar11.get()
-                    self.get_amount_water = int(self.entry_water_amount.get())
-                    self.get_Moisture_Min = int(self.entry_Moisture_Min.get())
-                    self.get_Moisture_Max = int(self.entry_Moisture_Max.get())
-                if self.num_schedule == 2:
-                    self.get_Action = tkvar12.get()
-                    self.get_amount_water = int(self.entry_water_amount_2.get())
-                    self.get_Moisture_Min = int(self.entry_Moisture_Min_2.get())
-                    self.get_Moisture_Max = int(self.entry_Moisture_Max_2.get())
-                else:
-                    self.num_schedule == 3
-                    self.get_Action = tkvar31.get()
-                    self.get_amount_water = int(self.entry_water_amount_3.get())
-                    self.get_Moisture_Min = int(self.entry_Moisture_Min_3.get())
-                    self.get_moisture_Max = int(self.entry_Moisture_Max_3.get())
+                try:
+                    if self.num_schedule == 1:
+                        self.get_Action = tkvar11.get()
+                        print('Num Schedule 1', self.get_Action)
+                        self.get_amount_water = int(self.entry_water_amount.get())
+                        self.get_Moisture_Min = int(self.entry_Moisture_Min.get())
+                        self.get_Moisture_Max = int(self.entry_Moisture_Max.get())
+                    if self.num_schedule == 2:
+                        self.get_Action = tkvar12.get()
+                        print('Num Schedule 2', self.get_Action)
+                        self.get_amount_water = int(self.entry_water_amount_2.get())
+                        self.get_Moisture_Min = int(self.entry_Moisture_Min_2.get())
+                        self.get_Moisture_Max = int(self.entry_Moisture_Max_2.get())
+                    if self.num_schedule == 3:
+                        self.get_Action = tkvar31.get()
+                        print('Num Schedule 3', self.get_Action)
+                        self.get_amount_water = int(self.entry_water_amount_3.get())
+                        self.get_Moisture_Min = int(self.entry_Moisture_Min_3.get())
+                        self.get_Moisture_Max = int(self.entry_Moisture_Max_3.get())
+                except:
+                    tkMessageBox.showerror("Error", "Please enter number!")
+                print('Param :', self.get_Action, self.get_amount_water, self.get_Moisture_Min, self.get_Moisture_Max)
 
                 if self.get_Action == 'Watering' :
-                    #for Watering 1 Location
-                    '''if (X_Target>=0) & (X_Target<=self.limit[0]) & (Y_Target>=0) & (Y_Target<=self.limit[1]):
+                    '''#for Watering 1 Location
+                    if (X_Target>=0) & (X_Target<=self.limit[0]) & (Y_Target>=0) & (Y_Target<=self.limit[1]):
                         cmd= 'G00 X{0} Y{1} Z{2}'.format(X_Target, Y_Target, Z_Target)
                         #self.ArdMntr.serial_send(cmd)
                         print 'ArdMntr.move_Coord...'
@@ -1403,10 +1479,12 @@ class App:
                         try:
                             self.scan_X= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
                             self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
+                            print '### ', self.scan_X, self.scan_Y
 
                             self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
+
                             if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
-                                #self.StartScan_judge= True
+                                self.StartScan_judge= True
 
                                 #=================================
                                 # New Thread of Watering process
@@ -1414,18 +1492,61 @@ class App:
                                 self.thread_watering= threading.Thread(target= self.watering_run)
                                 self.thread_watering.start()
                                 print '*** Watering...'
-                                self.Lock_tabcontrol(True)
-                                self.Lock_Menubar(True)
-                                self.tabbox.tab(self.tab_loadscript, state='disable')
 
                             else:
                                 tkMessageBox.showerror("Error", "The scanning of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1]))
                         except:
                             tkMessageBox.showerror('Error', 'Please enter nubmer')
 
-
-
                 else :
+                    print('Scanning Run')
+                    #For scanning
+                    self.input_Zpos= int(self.entry_Zpos.get())
+                    self.readmergeframeIndex= gui_vars.scanIndex
+                    print 'Start'
+
+                    if self.StartScan_judge:
+                        #===================================
+                        # Delete Scanning Thread
+                        #===================================
+                        self.StartScan_judge= False
+                        del(self.thread_scanning)
+
+                    else:
+                        if self.ArdMntr.connect:
+                            try:
+                                self.reset_mergeframe()
+                                self.scan_X= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
+                                self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
+                                self.set_mergeframe_size(self.scan_X[2], self.scan_Y[2])
+                                self.reset_mergeframe()
+                                print '### ', self.scan_X, self.scan_Y
+
+                                self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
+                                if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
+                                    self.StartScan_judge= True
+                                    #self.saveTimeIndex= datetime.now().strftime("%Y%m%d%H%M%S")
+                                    #self.saveTimeIndex= datetime.now().strftime('%Y%m%d%H%M%S')
+                                    #=================================
+                                    # New Thread of Scanning process
+                                    #================================
+                                    self.thread_scanning= threading.Thread(target= self.scanning_run)
+                                    self.thread_scanning.start()
+                                    print '*** scanning...'
+                                    self.tabbox.tab(self.tab_loadscript, state='disable')
+                                    self.btn_StartScan.config(text= 'Stop Scan', fg='white', activeforeground= 'white', bg= self.bgRed, activebackground= self.bgRed_active)
+                                    self.root.update()
+
+                                    self.Lock_tabcontrol(True)
+                                    self.Lock_Menubar(True)
+                                    self.root.update()
+                                else:
+                                    tkMessageBox.showerror("Error", "The scanning of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1]))
+                            except:
+                                    tkMessageBox.showerror('Error', 'Please enter nubmer')
+                        else:
+                            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
                     #For Seeding
                     '''if (X_Target>=0) & (X_Target<=self.limit[0]) & (Y_Target>=0) & (Y_Target<=self.limit[1]):
                         cmd1= 'G00 X{0} Y{1} Z{2}'.format(X_Target, Y_Target, Z_Target)
@@ -1442,53 +1563,19 @@ class App:
                     else:
                         tkMessageBox.showerror("Error", "The range of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1])) '''
                     #For scanning
-                    if self.ArdMntr.connect:
-                        try:
-                            self.reset_mergeframe()
-                            self.scan_X= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
-                            self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
-
-                            self.set_mergeframe_size(self.scan_X[2], self.scan_Y[2])
-                            self.reset_mergeframe()
-                            #print '### ', self.scan_X, self.scan_Y
-
-                            self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
-                            if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
-                                #self.StartScan_judge= True
-
-                                #self.saveTimeIndex= datetime.now().strftime("%Y%m%d%H%M%S")
-                                self.saveTimeIndex= datetime.now().strftime('%Y%m%d%H%M%S')
-
-                                #=================================
-                                # New Thread of Scanning process
-                                #================================
-                                self.thread_scanning= threading.Thread(target= self.scanning_run)
-                                self.thread_scanning.start()
-
-                                print '*** scanning...'
-                                self.Lock_tabcontrol(True)
-                                self.Lock_Menubar(True)
-                                self.tabbox.tab(self.tab_loadscript, state='disable')
-                                self.btn_StartScan.config(text= 'Stop Scan', fg='white', activeforeground= 'white', bg= self.bgRed, activebackground= self.bgRed_active)
-                                self.root.update()
-                            else:
-                                tkMessageBox.showerror("Error", "The scanning of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1]))
-                        except:
-                            tkMessageBox.showerror('Error', 'Please enter nubmer')
-                    else:
-                        tkMessageBox.showerror("Error", "Arduino connection refused!")
-
-            except:
-                tkMessageBox.showerror("Error", "Please enter number!")
 
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
+
+
+
+
 
     # Override CLOSE function
     def on_exit(self):
         #When you click to exit, this function is called
         if tkMessageBox.askyesno("Exit", "Do you want to quit the application?"):
-            #B self.store_para(gui_vars.saveParaPath, gui_vars.configName)
+            self.store_para(gui_vars.saveParaPath, gui_vars.configName)
             print 'Close Main Thread...'
             self.main_run_judge= False
             self.ArdMntr.exit= True
@@ -1504,7 +1591,7 @@ class App:
 
             self.CamMntr.release_cap()
             self.root.destroy()
-#Make Grid
+    #Make Grid
     def grid(result, line_distance):
         # vertical lines at an interval of "line_distance" pixel
         for x in range(line_distance,self.frame_width,line_distance):
@@ -1600,7 +1687,6 @@ class App:
             self.entry_Xpos.config(state= 'disabled')
             self.entry_Ypos.config(state= 'disabled')
             self.entry_Zpos.config(state= 'disabled')
-            self.btn_detect.config(state= 'disabled')
             self.btn_saveImg.config(state= 'disabled')
             self.entry_1stXpos.config(state= 'disabled')
             self.entry_1stYpos.config(state= 'disabled')
@@ -1623,7 +1709,6 @@ class App:
             self.entry_Xpos.config(state= 'normal')
             self.entry_Ypos.config(state= 'normal')
             self.entry_Zpos.config(state= 'normal')
-            self.btn_detect.config(state= 'normal')
             self.btn_saveImg.config(state= 'normal')
             self.entry_1stXpos.config(state= 'normal')
             self.entry_1stYpos.config(state= 'normal')
@@ -1680,15 +1765,36 @@ class App:
 
         #-2018.02.28-CGH
         for key, value in self.Peripheral_para:
-            if key.strip().replace(' ','').lower() == 'waterpump':  # is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Water Pump':  # is -> == 2018.02.28
 				self.pinNumb_water= value
 				print 'pinNumb_water: ', self.pinNumb_water		#2018.02.28
-            if key.strip().replace(' ','').lower() == 'vaccumpump':	# is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Vaccum Pump':	# is -> == 2018.02.28
                 self.pinNumb_seed= value
                 print 'pinNumb_seed: ', self.pinNumb_seed		#2018.02.28
-            if key.strip().replace(' ','').lower() == 'fan':		# is -> == 2018.02.28
+            if key.strip().replace(' ','').lower() == 'Fan':		# is -> == 2018.02.28
 				self.pinNumb_fan= value
 				print 'pinNumb_fan: ', self.pinNumb_fan			#2018.02.28
+
+    def set_Tool_1(self):
+        #Var= PeripheralSetting(self.root, [('Fan',8),('Water Pump',9)])
+        #print '>>> ',self.Peripheral_para
+        Var= ToolSetting(self.root, self.Tool_Setting_para)
+        if Var.result is not None:
+            self.Tool_Setting_para= Var.result
+        print '*** Return Value: ',Var.result
+        for key, valuex, valuey, valuez in self.Tool_Setting_para:
+            print key, valuex, valuey, valuez
+            if key == 'Tool Seeding':
+                self.Loc_Seed_X= valuex
+                self.Loc_Seed_Y= valuey
+                self.Loc_Seed_Z= valuez
+            if key == 'Tool Watering':
+                self.Loc_Water_X= valuex
+                self.Loc_Water_Y= valuey
+                self.Loc_Water_Z= valuez
+        print 'Location Tools: ',self.Tool_Setting_para
+        print 'Location Watering Tool: ', self.Loc_Water_X, self.Loc_Water_Y, self.Loc_Water_Z
+        print 'Location Seeding Tool: ', self.Loc_Seed_X, self.Loc_Seed_Y, self.Loc_Seed_Z
 
     def set_Motor(self):
         if self.ArdMntr.connect:
@@ -1706,6 +1812,17 @@ class App:
                 self.ArdMntr.set_Acceleration(self.Acceleration[1],'y')
                 self.ArdMntr.set_Acceleration(self.Acceleration[2],'z')
             #self.ArdMntr.set_MaxSpeed()
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!\n Please check its connection.")
+
+    def set_Tools(self):
+        Var = ToolsSetting(self.root, self.Seed_Tool_Setting, self.Water_Tool_Setting)
+        if Var.result is not None:
+            print 'result', Var.result
+            self.Seed_Tool_Setting= [Var.result[0], Var.result[1], Var.result[2]]
+            print'Seed', self.Seed_Tool_Setting
+            self.Water_Tool_Setting= [Var.result[3], Var.result[4], Var.result[5]]
+            print'Water', self.Water_Tool_Setting
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!\n Please check its connection.")
 
@@ -2163,6 +2280,52 @@ class App:
                 self.root.update()
             print 'Lighting... '
 
+    def btn_Load_Water_click(self):
+        self.btn_Tool_Water.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Water_click)
+
+    def btn_Unload_Water_click(self):
+        self.btn_Tool_Water.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Water_click)
+
+    def btn_Load_Seed_click(self):
+        self.btn_Tool_Seed.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Seed_click)
+        Target_X= int(self.Seed_Tool_Setting[0])
+        Target_Y= int(self.Seed_Tool_Setting[1])
+        Target_Z= int(self.Seed_Tool_Setting[2])
+        print('tes :', Target_X, Target_Y, Target_Z)
+        Nol_X= 0
+        Nol_Y= 0
+        Nol_Z= 0
+        self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+        time.sleep(10)
+        if self.ArdMntr.cmd_state.strCurX == 0 and self.ArdMntr.cmd_state.strCurY == 0 and self.ArdMntr.cmd_state.strCurZ == 0:
+            self.ArdMntr.move_Coord(Target_X, Target_Y, Nol_Z)
+        time.sleep(10)
+        #self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
+        #time.sleep(10)
+        #Move_X = int(Target_X + 100)
+        #self.ArdMntr.move_Coord(Move_X, Target_Y, Target_Z)
+        #time.sleep(10)
+        #self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+
+        #cmd= 'G00 X0 Y0 Z0'
+        #self.ArdMntr.serial_send(cmd)
+        #if self.ArdMntr.cmd_state.strCurX == 0 and self.ArdMntr.cmd_state.strCurY == 0 and self.ArdMntr.cmd_state.strCurZ == 0:
+        #cmd1= 'G00 X{0} Y{1} Z{2}'.format(Target_X, Target_Y,Nol)
+        #print('Tes :' ,cmd1)
+        #self.ArdMntr.serial_send(cmd1)
+        #if self.ArdMntr.cmd_state.strCurX == self.Seed_Tool_Setting[0] and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == 0:
+        #cmd2= 'G00 X{0} Y{1} Z{2}'.format(self.Seed_Tool_Setting[0], self.Seed_Tool_Setting[1], self.Seed_Tool_Setting[2])
+        #self.ArdMntr.serial_send(cmd2)
+        #Move_X = int(self.Seed_Tool_Setting[0] + 100)
+        #if self.ArdMntr.cmd_state.strCurX == self.Seed_Tool_Setting[0] and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == self.Seed_Tool_Setting[2]:
+        #cmd3= 'G00 X{0} Y{1} Z{2}'.format(Move_X, self.Seed_Tool_Setting[1], self.Seed_Tool_Setting[2])
+        #if self.ArdMntr.cmd_state.strCurX == Move_X and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == self.Seed_Tool_Setting[2]:
+        #self.ArdMntr.serial_send(cmd3)
+        #self.ArdMntr.serial_send(cmd)
+
+
+    def btn_Unload_Seed_click(self):
+        self.btn_Tool_Seed.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Seed_click)
 
     def btn_choosescript_click(self):
         str_scriptPath = tkFileDialog.askopenfilename(title = "Select file",filetypes = (("all files","*.*"),("Text File", "*.txt"),("jpeg files","*.jpg")))
@@ -2562,70 +2725,36 @@ class App:
 
 
     def watering_run(self):
+        step=0
         #while self.scanning_judge:
-        if self.Start_Watering_judge:
+        if self.StartScan_judge:
             print '>>> Scanning...'
-
-            step=0
             for step_X in range(0, self.scan_X[2]):
-                if step_X < 1 :
-                    self.after_1 = 0
-                else :
-                    self.after_1 = 1
                 for step_Y in range(0, self.scan_Y[2]):
                     if self.StartScan_judge== False:
                         break
-
-                    if step_X % 2 == 0:
-                        tmp_step_Y = step_Y
-
+                    if step_X % 2 ==0:
+                        tmp_step_Y= step_Y
                     else:
-                        tmp_step_Y = self.scan_Y[2]- step_Y - 1
-
-                    tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1] *2  , self.scan_Y[0]+ tmp_step_Y * self.scan_Y[1] *2
-                    #tmp_X, tmp_Y= self.scan_X[0] + step_X * self.scan_X[1], self.scan_Y[0] + step_Y * self.scan_Y[1]
-
+                        tmp_step_Y= self.scan_Y[2]- step_Y-1
+                    tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ tmp_step_Y*self.scan_Y[1]
+                    #tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1]
                     print '>> X, Y: ', tmp_X, ', ', tmp_Y
-
-                    #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X * self.scan_X[1], self.scan_Y[0]+ step_Y * self.scan_Y[1])
+                    #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1])
                     self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
                     time.sleep(1)
-                    '''while 1:
-                        self.ArdMntr.Water_Schedule(self.pinNumb_water, not(self.ArdMntr.WaterOn) , 5)
-                        time.sleep(1)'''
-                    tes_soil = 'T01 V1'
-                    self.ArdMntr.serial_send(tes_soil)
-                    time.sleep(10)
-                    soil_data = float(self.ArdMntr.cmd_state.strSoil)
-                    print('Test Soil :')
-                    print(soil_data)
-                    soil_min = self.get_Moisture_Min
-                    soil_max = self.get_Moisture_Max
-                    if soil_data > soil_min and soil_data < soil_max :
-                        cmd = 'F02 N{0}'.format(self.get_amount_water)
-                        print(self.get_amount_water, 'ml')
-                        self.serial_send(cmd)
-                        water = int(self.get_amount_water)
-                        db = sqlite3.connect('Database_Plant.db')
-                        db.execute("UPDATE Plant_Database SET Amount_Water = (Amount_Water + ?) WHERE Location_Plant_X = ? AND Location_Plant_Y = ?" , (water, tmp_x, tmp_y,))
-                        db.commit()
-                        time.sleep(1)
-                    else :
-                        print('Not Work')
-                    tes_soil1 = 'T01 V0'
-                    self.ArdMntr.serial_send(tes_soil1)
+                    while 1:
+                        if (self.ArdMntr.cmd_state.is_ready()):
+                            self.ArdMntr.Water_Schedule(self.pinNumb_water, not(self.ArdMntr.WaterOn) , 2)
+                            time.sleep(1)
 
-
-
-
-
+                            break
+                        else:
+                            time.sleep(1)
                     if self.StartScan_judge== False:
                         break
                     step= step+1
             self.StartScan_judge= False
-            self.Lock_tabcontrol(False)
-            self.Lock_Menubar(False)
-            self.tabbox.tab(self.tab_loadscript, state='normal')
 
         else:
             time.sleep(0.2)
@@ -2646,7 +2775,7 @@ class App:
 
 
     def change_dropdown11(*args):
-        print( tkvar11.get() )
+        print(tkvar11.get())
 
     def change_dropdown12(*args):
         print( tkvar12.get())

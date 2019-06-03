@@ -51,7 +51,7 @@ class MotorSetting(tkSimpleDialog.Dialog):
             acc_Y = int(self.entry_Acc_Y.get())
             spd_Z = int(self.entry_Speed_Z.get())
             acc_Z = int(self.entry_Acc_Z.get())
-             
+
             self.result= spd_X, acc_X, spd_Y, acc_Y, spd_Z, acc_Z
             print spd_X, spd_Y, spd_Z # or something
         except ValueError:
