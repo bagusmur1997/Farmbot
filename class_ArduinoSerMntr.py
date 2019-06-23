@@ -164,7 +164,7 @@ class MonitorThread(threading.Thread):
         self.ser.write(send_str + " \r\n")
         self.cmd_state.set_by_send(send_str)
 
-    def Water_Schedule(self, arg_pinNumb=9, arg_On=False, arg_delay=5):
+    def Water_Schedule(self, arg_pinNumb=9, arg_On=False, arg_delay=3):
         if arg_On:
             #self.serial_send('F41 P9 V1 M0')
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))	#2018.02.28

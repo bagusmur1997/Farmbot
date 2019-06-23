@@ -17,7 +17,7 @@ import time
 import types
 from GUI import PlantDetectionGUI
 from PlantDetection import PlantDetection
-
+from decimal import Decimal
 from tkcalendar import Calendar, DateEntry
 
 import Tkinter as ttk
@@ -137,16 +137,19 @@ class App:
         self.Tool_Setting_para= params['Tools Setting']
 
         #Pin Number Peripheral
-        self.pinNumb_fan = 8
-        self.pinNumb_water = 10
-        self.pinNumb_seed = 9
+        self.pinNumb_fan = 10
+        self.pinNumb_water = 9
+        self.pinNumb_seed = 8
 
         #self.Numb_X_Water
 
+
         #Location Seed Tools
-        self.Loc_Seed_X = 0
-        self.Loc_Seed_Y = 0
-        self.Loc_Seed_Z = 0
+        self.Loc_Seed_X = ""
+        self.Loc_Seed_Y = ""
+        self.Loc_Seed_Z = ""
+
+
 
         #Location Water Tools
         self.Loc_Water_X = 0
@@ -176,9 +179,9 @@ class App:
         for key, valuex, valuey, valuez in self.Tool_Setting_para:
             print key, valuex, valuey, valuez
             if key == 'Tool Seeding':
-                self.Loc_Seed_X= valuex
-                self.Loc_Seed_Y= valuey
-                self.Loc_Seed_Z= valuez
+                self.Loc_Seed_X= str(valuex)
+                self.Loc_Seed_Y= str(valuey)
+                self.Loc_Seed_Z= str(valuez)
                 print 'Location X Seeding Tool:', self.Loc_Seed_X
                 print 'Location Y Seeding Tool:', self.Loc_Seed_Y
                 print 'Location Z Seeding Tool:', self.Loc_Seed_Z
@@ -202,7 +205,8 @@ class App:
         self.strStatus= 'Idling...'
         self.readmergeframeIndex= ''
         self.Start_Watering_judge= False
-
+        self.LoadnUnloadTool_judge= False
+        self.Planting_On=False
 
         self.root.update()
 
@@ -229,7 +233,7 @@ class App:
         self.menubar.add_cascade(label="Setting", underline=0, menu=self.SettingMenu)
         self.SettingMenu.add_command(label= "Peripheral Setting", command= self.set_Peripheral)
         self.SettingMenu.add_command(label= "Motor Setting", command= self.set_Motor)
-        self.SettingMenu.add_command(label = "Tools Setting", command= self.set_Tool_1)
+        #self.SettingMenu.add_command(label = "Tools Setting", command= self.set_Tool_1)
         self.ConnectMenu = Tkinter.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Communication", underline= 0, menu=self.ConnectMenu)
         self.ConnectMenu.add_command(label="Connect to Arduino", command=self.set_ArdConnect)
@@ -382,6 +386,15 @@ class App:
         # ==================================================
         # [TAB CONTROL] Seeding, Watering, Lighting, Grab Image
         # ==================================================
+
+        # Button E-store_para
+        photo_e_stop= self.IconResize(gui_vars.saveParaPath+'e_stop.png')
+        self.btn_E_Stop= Tkinter.Button(self.tab_control,image= photo_e_stop, cursor= 'hand2', command= self.btn_E_Stop_click)
+        self.btn_E_Stop.image= photo_e_stop
+        self.btn_E_Stop.place(x= self.btn_MoveLeft.winfo_x()- self.btn_MoveLeft.winfo_width()- gui_vars.interval_x * 5 - 3, y=self.btn_MoveDown.winfo_y())
+        self.root.update()
+
+
         # Button Seeding
         photo_seed= self.IconResize(gui_vars.saveParaPath+'img_Seed.png')
         self.btn_Seed= Tkinter.Button(self.tab_control,image= photo_seed, cursor= 'hand2', command= self.btn_Seed_click)
@@ -959,7 +972,7 @@ class App:
         # ==================================================
         # [TAB LOADING TOOLS]
         # ==================================================
-        self.Bg_Image_Load = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 5, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+        self.Bg_Image_Load = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 7, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
     	self.Bg_Image_Load.place(x= gui_vars.interval_x -4, y = self.btn_saveImg.winfo_y()+ self.btn_saveImg.winfo_height()+gui_vars.interval_y * 4)
     	self.root.update()
 
@@ -967,7 +980,7 @@ class App:
         self.lbl_LU_Tools.place(x= gui_vars.interval_x, y = self.btn_saveImg.winfo_y()+ self.btn_saveImg.winfo_height()+gui_vars.interval_y*5)
         self.root.update()
 
-        self.lbl_Tool_Seed= Tkinter.Label(self.tab_planting, text="Tool Seeding   :", font= myfont12_Bold, bg=bgBlue1)
+        self.lbl_Tool_Seed= Tkinter.Label(self.tab_planting, text="Tool Seeding        :", font= myfont12_Bold, bg=bgBlue1)
         self.lbl_Tool_Seed.place(x= gui_vars.interval_x * 2, y= self.lbl_LU_Tools.winfo_y() + self.lbl_LU_Tools.winfo_height() + gui_vars.interval_y * 2)
         self.root.update()
 
@@ -975,12 +988,20 @@ class App:
         self.btn_Tool_Seed.place(x= self.lbl_Tool_Seed.winfo_x() + self.lbl_Tool_Seed.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Seed.winfo_y() - gui_vars.interval_y)
         self.root.update()
 
-        self.lbl_Tool_Water= Tkinter.Label(self.tab_planting, text="Tool Watering  :", font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Tool_Water= Tkinter.Label(self.tab_planting, text="Tool Watering       :", font=myfont12_Bold, bg=bgBlue1)
         self.lbl_Tool_Water.place(x= gui_vars.interval_x * 2, y= self.lbl_Tool_Seed.winfo_y() + self.lbl_Tool_Seed.winfo_height() + gui_vars.interval_y * 2 )
         self.root.update()
 
         self.btn_Tool_Water= Tkinter.Button(self.tab_planting, text= 'Load', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.btn_Load_Water_click)
         self.btn_Tool_Water.place(x= self.lbl_Tool_Water.winfo_x() + self.lbl_Tool_Water.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Water.winfo_y() - gui_vars.interval_y)
+        self.root.update()
+
+        self.lbl_Tool_Soil= Tkinter.Label(self.tab_planting, text="Tool Soil Sensor  :", font=myfont12_Bold, bg=bgBlue1)
+        self.lbl_Tool_Soil.place(x= gui_vars.interval_x * 2, y= self.lbl_Tool_Water.winfo_y() + self.lbl_Tool_Water.winfo_height() + gui_vars.interval_y * 2 )
+        self.root.update()
+
+        self.btn_Tool_Soil= Tkinter.Button(self.tab_planting, text= 'Load', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.btn_Load_Soil_click)
+        self.btn_Tool_Soil.place(x= self.lbl_Tool_Soil.winfo_x() + self.lbl_Tool_Soil.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Soil.winfo_y() - gui_vars.interval_y)
         self.root.update()
 
         '''self.lbl_green_plant_detect= Tkinter.Label(self.tab_planting, text="Detect Green Plant", font= myfont14_Bold)
@@ -1235,8 +1256,47 @@ class App:
         Target_X= LOCATION_PLANT_X.get()
         Target_Y= LOCATION_PLANT_Y.get()
         Target_Z= LOCATION_PLANT_Z.get()
-        self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
-        time.sleep(1)
+        line_to_replace = 6
+
+        with open('GetBiji.txt', 'r') as file:
+            lines = file.readlines()
+        if len(lines) > int(line_to_replace):
+            tes1= 'G00 X{0} Y{0} Z0 \n'.format(Target_X, Target_Y)
+            print('Tes', tes1)
+            lines[line_to_replace] = tes1
+        with open('GetBiji.txt', 'w') as file:
+            file.writelines(lines)
+
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+
+            else:
+
+                with open('GetBiji.txt') as f:
+                    with open('tmp.txt', 'w') as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.Planting_On= True
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
 
     def Viewall(self):
         global tree
@@ -1466,6 +1526,8 @@ class App:
                         time.sleep(1)
                     else:
                         tkMessageBox.showerror("Error", "The range of X should be in [0~{0}]\nThe range of Y should be in [0~{1}]".format(self.limit[0],self.limit[1]))'''
+
+
                     if self.Start_Watering_judge:
                         #===================================
                         # Delete Scanning Thread
@@ -1481,7 +1543,7 @@ class App:
                             self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
                             print '### ', self.scan_X, self.scan_Y
 
-                            self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
+                            #self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
 
                             if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
                                 self.StartScan_judge= True
@@ -1592,18 +1654,18 @@ class App:
             self.CamMntr.release_cap()
             self.root.destroy()
     #Make Grid
-    def grid(result, line_distance):
+    '''def grid(result, line_distance):
         # vertical lines at an interval of "line_distance" pixel
         for x in range(line_distance,self.frame_width,line_distance):
             canvas.create_line(x, 0, x, self.frame_height, fill="#ffffff") #white color #ffffff
         # horizontal lines at an interval of "line_distance" pixel
         for y in range(line_distance, self.frame_height,line_distance):
-            canvas.create_line(0, y, self.frame_width, y, fill="#ffffff") #white color #ffffff
+            canvas.create_line(0, y, self.frame_width, y, fill="#ffffff") #white color #ffffff'''
 
     #Current Location Motor
     def UI_callback(self):
         if self.ArdMntr.connect== True:
-            tmp_text= 'Location: (X, Y, Z)= ('+self.ArdMntr.cmd_state.strCurX+', '+self.ArdMntr.cmd_state.strCurY+', '+self.ArdMntr.cmd_state.strCurZ+')'
+            tmp_text= 'Location: (X, Y, Z)= (' + self.ArdMntr.cmd_state.strCurX + ', '+self.ArdMntr.cmd_state.strCurY+', '+self.ArdMntr.cmd_state.strCurZ+')'
             #Soil_Data = self.ArdMntr.cmd_state.strSoil
         else:
             tmp_text='Arduino Connection Refuesed!'
@@ -1785,9 +1847,9 @@ class App:
         for key, valuex, valuey, valuez in self.Tool_Setting_para:
             print key, valuex, valuey, valuez
             if key == 'Tool Seeding':
-                self.Loc_Seed_X= valuex
-                self.Loc_Seed_Y= valuey
-                self.Loc_Seed_Z= valuez
+                self.Loc_Seed_X= str(valuex)
+                self.Loc_Seed_Y= str(valuey)
+                self.Loc_Seed_Z= str(valuez)
             if key == 'Tool Watering':
                 self.Loc_Water_X= valuex
                 self.Loc_Water_Y= valuey
@@ -1897,7 +1959,7 @@ class App:
             elif event.keysym == 'F5':
                 self.rdbtn_MvAmount_50.select()
         self.Move_interval= self.MvAmount.get()
-        print 'rdVal',self.Move_interval
+        print 'Radio Button',self.Move_interval, 'mm'
 
 
     def btn_MoveAmount_click(self, event= None):
@@ -1914,11 +1976,12 @@ class App:
             #self.Move_interval= self.MvAmount.get()
 
             tmp_x, tmp_y, tmp_z= self.ArdMntr.get_CurPosition()
-            print '==>>> ',tmp_x, tmp_y, tmp_z
-            print '==>>> ',self.Move_interval * self.Move_intervalUnit
+            #print '==>>> ',tmp_x, tmp_y, tmp_z
+            #print '==>>> ',self.Move_interval * self.Move_intervalUnit
             if move_type == 'Up':
                 After_MoveAmount_X1 = tmp_x + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x + self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
+                print 'Move Amount X Axis (Up)', self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_X1 - self.Move_interval) == tmp_x :
                     Move_Amount10_Up = pd.DataFrame([['3', 'Move Amount X Axis (Up) 10mm',  str(After_MoveAmount_X1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['3'])
                     Move_Amount10_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=3, startcol= 0)
@@ -1967,6 +2030,7 @@ class App:
             elif move_type == 'Down':
                 self.ArdMntr.move_Coord(tmp_x - self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
                 After_MoveAmount_X2 = tmp_x - self.Move_interval
+                print 'Move Amount X Axis (Down)', self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_X2 + self.Move_interval) == tmp_x :
                     Move_Amount10_Down = pd.DataFrame([['8', 'Move Amount X Axis (Down) 10mm',  str(After_MoveAmount_X2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['8'])
                     Move_Amount10_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=8, startcol= 0)
@@ -1981,7 +2045,7 @@ class App:
                     Move_Amount50_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=9, startcol= 0)
                     writer.save()
                 else:
-                    Move_Amount50_Down = pd.DataFrame([['9', 'Move Amount X Axis (Down) 50mm',  str(After_MoveAmount_X) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['9'])
+                    Move_Amount50_Down = pd.DataFrame([['9', 'Move Amount X Axis (Down) 50mm',  str(After_MoveAmount_X2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['9'])
                     Move_Amount50_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=9, startcol= 0)
                     writer.save()
 
@@ -2015,6 +2079,7 @@ class App:
             elif move_type == 'Right':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y + self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y1 = tmp_y + self.Move_interval
+                print 'Move Amount Y Axis (Right)',self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_Y1 - self.Move_interval) == tmp_y :
                     Move_Amount10_Right = pd.DataFrame([['13', 'Move Amount Y Axis (Right) 10mm',  str(After_MoveAmount_Y1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['13'])
                     Move_Amount10_Right.to_excel(writer,'Sheet1', index=False, header=False, startrow=13, startcol= 0)
@@ -2063,6 +2128,7 @@ class App:
             elif move_type == 'Left':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y - self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y2 = tmp_y - self.Move_interval
+                print 'Move Amount Y Axis (Left)',self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_Y2 + self.Move_interval) == tmp_y :
                     Move_Amount10_Left = pd.DataFrame([['18', 'Move Amount Y Axis (Left) 10mm',  str(After_MoveAmount_Y2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['18'])
                     Move_Amount10_Left.to_excel(writer,'Sheet1', index=False, header=False, startrow=18, startcol= 0)
@@ -2119,6 +2185,7 @@ class App:
             if move_type == 'Up':
                 After_MoveAmount_Z1 = tmp_z + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z + self.Move_interval * self.Move_intervalUnit)
+                print 'Move Amount Z Axis (Up)',self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_Z1 - self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Up = pd.DataFrame([['23', 'Move Amount Z Axis (Up) 10mm',  str(After_MoveAmount_Z1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['23'])
                     Move_Amount10_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=23, startcol= 0)
@@ -2167,6 +2234,7 @@ class App:
             elif move_type == 'Down':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z - self.Move_interval * self.Move_intervalUnit)
                 After_MoveAmount_Z2 = tmp_z  - self.Move_interval
+                print 'Move Amount Z Axis (Down)',self.Move_interval * self.Move_intervalUnit, ' mm'
                 if self.Move_interval == 10 and (After_MoveAmount_Z2 + self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Down = pd.DataFrame([['28', 'Move Amount Z Axis (Down) 10mm',  str(After_MoveAmount_Z2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['28'])
                     Move_Amount10_Z_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=28, startcol= 0)
@@ -2211,6 +2279,11 @@ class App:
                     Move_Amount500_Z_Up = pd.DataFrame([['32', 'Move Amount Z Axis (Down) 500mm',  str(After_MoveAmount_Z2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['32'])
                     Move_Amount500_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=32, startcol= 0)
                     writer.save()
+
+    def btn_E_Stop_click(self):
+        E_Stop = 'E'
+        self.ArdMntr.serial_send(E_Stop)
+
 
     def btn_Seed_click(self):
         if self.ArdMntr.connect:
@@ -2282,50 +2355,223 @@ class App:
 
     def btn_Load_Water_click(self):
         self.btn_Tool_Water.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Water_click)
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("LoadWater.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
 
     def btn_Unload_Water_click(self):
         self.btn_Tool_Water.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Water_click)
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("UnLoadWater.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
+
+    def btn_Load_Soil_click(self):
+        self.btn_Tool_Soil.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Soil_click)
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("LoadSoil.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
+    def btn_Unload_Soil_click(self):
+        self.btn_Tool_Soil.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Soil_click)
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("UnLoadSoil.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
+
 
     def btn_Load_Seed_click(self):
         self.btn_Tool_Seed.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Seed_click)
-        Target_X= int(self.Seed_Tool_Setting[0])
-        Target_Y= int(self.Seed_Tool_Setting[1])
-        Target_Z= int(self.Seed_Tool_Setting[2])
-        print('tes :', Target_X, Target_Y, Target_Z)
+        '''Target_X= str(self.Loc_Seed_X)
+        Target_Y= str(self.Loc_Seed_Y)
+        Target_Z= str(self.Loc_Seed_Z)
+        Move_X = '50.00'
         Nol_X= 0
         Nol_Y= 0
         Nol_Z= 0
-        self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
-        time.sleep(10)
-        if self.ArdMntr.cmd_state.strCurX == 0 and self.ArdMntr.cmd_state.strCurY == 0 and self.ArdMntr.cmd_state.strCurZ == 0:
-            self.ArdMntr.move_Coord(Target_X, Target_Y, Nol_Z)
-        time.sleep(10)
-        #self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
-        #time.sleep(10)
-        #Move_X = int(Target_X + 100)
-        #self.ArdMntr.move_Coord(Move_X, Target_Y, Target_Z)
-        #time.sleep(10)
-        #self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+        print('Tes', Target_X, Target_Y, Target_Z)
 
-        #cmd= 'G00 X0 Y0 Z0'
-        #self.ArdMntr.serial_send(cmd)
-        #if self.ArdMntr.cmd_state.strCurX == 0 and self.ArdMntr.cmd_state.strCurY == 0 and self.ArdMntr.cmd_state.strCurZ == 0:
-        #cmd1= 'G00 X{0} Y{1} Z{2}'.format(Target_X, Target_Y,Nol)
-        #print('Tes :' ,cmd1)
-        #self.ArdMntr.serial_send(cmd1)
-        #if self.ArdMntr.cmd_state.strCurX == self.Seed_Tool_Setting[0] and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == 0:
-        #cmd2= 'G00 X{0} Y{1} Z{2}'.format(self.Seed_Tool_Setting[0], self.Seed_Tool_Setting[1], self.Seed_Tool_Setting[2])
-        #self.ArdMntr.serial_send(cmd2)
-        #Move_X = int(self.Seed_Tool_Setting[0] + 100)
-        #if self.ArdMntr.cmd_state.strCurX == self.Seed_Tool_Setting[0] and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == self.Seed_Tool_Setting[2]:
-        #cmd3= 'G00 X{0} Y{1} Z{2}'.format(Move_X, self.Seed_Tool_Setting[1], self.Seed_Tool_Setting[2])
-        #if self.ArdMntr.cmd_state.strCurX == Move_X and self.ArdMntr.cmd_state.strCurY == self.Seed_Tool_Setting[1] and self.ArdMntr.cmd_state.strCurZ == self.Seed_Tool_Setting[2]:
-        #self.ArdMntr.serial_send(cmd3)
-        #self.ArdMntr.serial_send(cmd)
+        self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+        time.sleep(5)
+
+        while 1:
+            if self.ArdMntr.cmd_state.strCurX == '0.00' and self.ArdMntr.cmd_state.strCurY == '0.00' and self.ArdMntr.cmd_state.strCurZ == '0.00':
+                self.ArdMntr.move_Coord(Target_X, Target_Y, Nol_Z)
+                time.sleep(1)
+            if self.ArdMntr.cmd_state.strCurX == Target_X and self.ArdMntr.cmd_state.strCurY == Target_Y and self.ArdMntr.cmd_state.strCurZ == '0.00':
+                self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
+                time.sleep(1)
+            if self.ArdMntr.cmd_state.strCurX == Target_X and self.ArdMntr.cmd_state.strCurY == Target_Y and self.ArdMntr.cmd_state.strCurZ == Target_Z:
+                self.ArdMntr.move_Coord(Move_X, Target_Y, Target_Z)
+                time.sleep(1)
+
+            if self.ArdMntr.cmd_state.strCurX == Move_X and self.ArdMntr.cmd_state.strCurY == Target_Y and self.ArdMntr.cmd_state.strCurZ == Target_Z:
+                self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+                time.sleep(1)
+                break'''
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("LoadSeed.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
 
 
     def btn_Unload_Seed_click(self):
         self.btn_Tool_Seed.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Seed_click)
+        '''Target_X= str(self.Loc_Seed_X)
+        Target_Y= str(self.Loc_Seed_Y)
+        Target_Z= str(self.Loc_Seed_Z)
+        Move_X = 50
+
+        Nol_X= 0
+        Nol_Y= 0
+        Nol_Z= 0
+
+        self.ArdMntr.move_Coord(Nol_X, Nol_Y, Nol_Z)
+        time.sleep(5)
+
+        while 1:
+            if (self.ArdMntr.cmd_state.is_ready()):
+                time.sleep(1)
+                self.ArdMntr.move_Coord(Move_X, Target_Y, Target_Z)
+                break
+            else:
+                time.sleep(1)'''
+        if self.ArdMntr.connect:
+            if self.StartRunScript_judge:
+                #===================================
+                # Delete Scanning Thread
+                #===================================
+                self.StartRunScript_judge= False
+                del(self.thread_runningScript)
+
+            else:
+                with open("UnLoadSeed.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                #=================================
+                # New Thread of Scanning process
+                #================================
+                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
+                self.thread_runningScript.start()
+
+                self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
+                self.tabbox.tab(self.tab_loadscript, state='disable')
+                self.StartRunScript_judge= True
+        else:
+            tkMessageBox.showerror("Error", "Arduino connection refused!")
+
+
 
     def btn_choosescript_click(self):
         str_scriptPath = tkFileDialog.askopenfilename(title = "Select file",filetypes = (("all files","*.*"),("Text File", "*.txt"),("jpeg files","*.jpg")))
@@ -2370,6 +2616,7 @@ class App:
                 self.thread_runningScript.start()
 
                 self.tabbox.tab(self.tab_control, state='disable')
+                self.tabbox.tab(self.tab_event_schedule,state='disable')
                 self.Lock_tabloadscript(True)
                 self.btn_runscript.config(text= 'STOP', fg='white', activeforeground= 'white', bg= self.bgRed,activebackground= self.bgRed_active)
                 self.StartRunScript_judge= True
@@ -2487,7 +2734,7 @@ class App:
 
 
 
-    def grid_display(self, frame):
+    '''def grid_display(self, frame):
         w1 = frame.shape[0] * 2 / 5
         h1 = frame.shape[1] * 2 / 5
         w2 = frame.shape[0] / 5
@@ -2555,7 +2802,7 @@ class App:
         cv2.line(frame , (h2 + h1, w2 - w2), (h2 + h1, w1 + w1) , (255,0,0), 1)
 
 
-        return frame
+        return frame'''
 
     def saveImg_function(self, arg_frame,arg_savePath, arg_filename):
         utils_tool.check_path(arg_savePath)
@@ -2580,6 +2827,7 @@ class App:
     def runningScript_run(self):
         cmd_file = open('tmp.txt', "r")
         lines = cmd_file.readlines()
+
         for line in lines:
             cols = line.split("#")
             print '***', self.StartRunScript_judge,line
@@ -2610,9 +2858,12 @@ class App:
             time.sleep(1)
             if self.StartRunScript_judge== False:
                 break
+
         #B cmd_file.close()
         #B print 'CLOSE FILE...'
         self.tabbox.tab(self.tab_control, state='normal')
+        self.tabbox.tab(self.tab_event_schedule,state='normal')
+        self.tabbox.tab(self.tab_loadscript, state='normal')
         self.Lock_tabloadscript(False)
         self.btn_runscript.config(text= 'RUN', fg='white', activeforeground= 'white', bg= self.bgGreen,activebackground= self.bgGreen_active)
         self.StartRunScript_judge= False
@@ -2685,7 +2936,7 @@ class App:
 
         if frame is not -1:
             frame= cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = self.grids(frame)
+            #B frame = self.grids(frame)
             frame= cv2.resize(frame,(self.frame_width,self.frame_height),interpolation=cv2.INTER_LINEAR)
             text='Arduino Connection Refused ...'
             text_water=''
@@ -2723,12 +2974,53 @@ class App:
         time.sleep(0.01)
 
 
-
     def watering_run(self):
+
+        step=0
+        self.input_Zpos= int(self.entry_Zpos.get())
+        self.scan_X= [int(self.entry_1stXpos.get()), int(self.entry_ScanInterval_X.get()), int(self.entry_ScanAmount_X.get())]
+        self.scan_Y= [int(self.entry_1stYpos.get()), int(self.entry_ScanInterval_Y.get()), int(self.entry_ScanAmount_Y.get())]
+
+        self.ZposPara= 50
+        #Load Soil Sensor
+        with open("LoadSoil.txt") as f:
+            with open("tmp.txt", "w") as f1:
+                for line in f:
+                    f1.write(line)
+        cmd_file = open('tmp.txt', "r")
+        lines = cmd_file.readlines()
+
+        for line in lines:
+            cols = line.split("#")
+            print '***', self.StartRunScript_judge,line
+            print("line=%s,cols_count=%i" %(line,len(cols)))
+            if len(cols)>=1:
+                cmd = cols[0]
+                cmd = cmd.strip()
+                if len(cmd)>0:
+                    print(">> "+cmd)
+                    cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                    while 1:
+                        if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                            self.ArdMntr.serial_send("%s" %cmd)
+                            time.sleep(1)
+                            break
+                        else:
+                            time.sleep(1)
+        while 1:
+            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
+                time.sleep(1)
+                break
+            else:
+                time.sleep(1)
+
+        #while self.scanning_judge:
         step=0
         #while self.scanning_judge:
         if self.StartScan_judge:
-            print '>>> Scanning...'
+            print '>>> Watering Running...'
+
             for step_X in range(0, self.scan_X[2]):
                 for step_Y in range(0, self.scan_Y[2]):
                     if self.StartScan_judge== False:
@@ -2741,16 +3033,120 @@ class App:
                     #tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1]
                     print '>> X, Y: ', tmp_X, ', ', tmp_Y
                     #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1])
-                    self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
-                    time.sleep(1)
                     while 1:
                         if (self.ArdMntr.cmd_state.is_ready()):
-                            self.ArdMntr.Water_Schedule(self.pinNumb_water, not(self.ArdMntr.WaterOn) , 2)
+                            self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
                             time.sleep(1)
-
                             break
+
+                    # Check Condition Soil Sensor
+                    while 1:
+                        #Soil_Data = int(self.ArdMntr.cmd_state.strSoil)
+                        Soil_Data = 50
+                        if (self.ArdMntr.cmd_state.is_ready()):
+                            time.sleep(5)
+                            if Soil_Data > self.get_Moisture_Min and Soil_Data < self.get_Moisture_Max:
+                                time.sleep(1)
+                                with open("UnLoadSoilnLoadWater.txt") as f:
+                                    with open("tmp.txt", "w") as f1:
+                                        for line in f:
+                                            f1.write(line)
+                                cmd_file = open('tmp.txt', "r")
+                                lines = cmd_file.readlines()
+
+                                for line in lines:
+                                    cols = line.split("#")
+                                    print '***', self.StartRunScript_judge,line
+                                    print("line=%s,cols_count=%i" %(line,len(cols)))
+                                    if len(cols)>=1:
+                                        cmd = cols[0]
+                                        cmd = cmd.strip()
+                                        if len(cmd)>0:
+                                            print(">> "+cmd)
+                                            cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                                            while 1:
+                                                if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                                                    self.ArdMntr.serial_send("%s" %cmd)
+                                                    time.sleep(1)
+                                                    break
+                                                else:
+                                                    time.sleep(1)
+                                            time.sleep(1)
+                                while 1:
+                                    if (self.ArdMntr.cmd_state.is_ready()):
+                                        self.ArdMntr.move_Coord(tmp_X, tmp_Y, 0)
+                                        break
+                                while 1:
+                                    if (self.ArdMntr.cmd_state.is_ready()):
+                                        self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
+                                        time.sleep(3)
+                                        self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
+                                        break
+
+                                with open("UnLoadWater.txt") as f:
+                                    with open("tmp.txt", "w") as f1:
+                                        for line in f:
+                                            f1.write(line)
+                                cmd_file = open('tmp.txt', "r")
+                                lines = cmd_file.readlines()
+
+                                for line in lines:
+                                    cols = line.split("#")
+                                    print '***', self.StartRunScript_judge,line
+                                    print("line=%s,cols_count=%i" %(line,len(cols)))
+                                    if len(cols)>=1:
+                                        cmd = cols[0]
+                                        cmd = cmd.strip()
+                                        if len(cmd)>0:
+                                            print(">> "+cmd)
+                                            cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                                            while 1:
+                                                if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                                                    self.ArdMntr.serial_send("%s" %cmd)
+                                                    time.sleep(1)
+                                                    break
+                                                else:
+                                                    time.sleep(1)
+                                    time.sleep(1)
+                                #Check Work or Not
+                                if step_X == self.scan_X[2] and step_Y == self.scan_Y[2]:
+                                    time.sleep(1)
+                                    break
+                                else:
+                                    with open("LoadSoil.txt") as f:
+                                        with open("tmp.txt", "w") as f1:
+                                            for line in f:
+                                                f1.write(line)
+                                    cmd_file = open('tmp.txt', "r")
+                                    lines = cmd_file.readlines()
+
+                                    for line in lines:
+                                        cols = line.split("#")
+                                        print '***', self.StartRunScript_judge,line
+                                        print("line=%s,cols_count=%i" %(line,len(cols)))
+                                        if len(cols)>=1:
+                                            cmd = cols[0]
+                                            cmd = cmd.strip()
+                                            if len(cmd)>0:
+                                                print(">> "+cmd)
+                                                cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                                                while 1:
+                                                    if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                                                        self.ArdMntr.serial_send("%s" %cmd)
+                                                        time.sleep(1)
+                                                        break
+                                                    else:
+                                                        time.sleep(1)
+                                        time.sleep(1)
+                                    break
+
+
+                            else :
+                                time.sleep(1)
+                                break
                         else:
                             time.sleep(1)
+
                     if self.StartScan_judge== False:
                         break
                     step= step+1
@@ -2759,6 +3155,7 @@ class App:
         else:
             time.sleep(0.2)
             step=0
+
 
     def Plant_Detection_Go(self):
         from GUI import PlantDetectionGUI

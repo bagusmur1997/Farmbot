@@ -80,7 +80,7 @@ class ToolSetting(tkSimpleDialog.Dialog):
             for i in range(1, len(self.__entries_Tools)):
                 r1, r2, r3, r4= self.__entries_Tools[i].get(), self.__entries_LocX[i].get(), self.__entries_LocY[i].get(), self.__entries_LocZ[i].get()
                 if r1 != '' and r2 != '' and r3 != '' and r4 != '':
-                    self.result.append([r1,int(r2), int(r3), int(r4)])
+                    self.result.append([r1, r2, r3, r4])
             #print 'result:', self.result
             print 'End of dialog' # or something
         except ValueError:

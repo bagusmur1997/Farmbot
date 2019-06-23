@@ -175,6 +175,7 @@ class Image(object):
         """Create mask using HSV range from blurred image."""
         # Create HSV image
         hsv = cv2.cvtColor(self.images['blurred'], cv2.COLOR_BGR2HSV)
+        cv2.imwrite('Debug/hsv_img.jpg',hsv)
         # Select HSV color bounds for mask and create plant mask
         # Hue range: [0,179], Saturation range: [0,255], Value range: [0,255]
         hsv_min = [self.params.parameters['H'][0],
@@ -196,6 +197,7 @@ class Image(object):
             self.images['masked'] = cv2.inRange(
                 hsv, np.array(hsv_min), np.array(hsv_max))
         self.images['current'] = self.images['masked'].copy()
+        cv2.imwrite('Debug/masked_img.jpg',self.images['masked'])
 
     def _morph(self):
         """Process mask to try to make plants more coherent."""
@@ -237,6 +239,7 @@ class Image(object):
                         self.images['morphed'],
                         morph_type, kernel, iterations=iterations)
         self.images['current'] = self.images['morphed']
+        cv2.imwrite('Debug/morphed_img.jpg',self.images['morphed'])
 
     def _mask_original_image(self, mask_name):
         """Apply a mask to the original image, showing the regions selected."""
