@@ -60,9 +60,9 @@ import json
 import cv2
 
 # Excel
-import pandas as pd
-from pandas import ExcelWriter
-from pandas import ExcelFile
+#import pandas as pd
+#from pandas import ExcelWriter
+#from pandas import ExcelFile
 import numpy as np
 
 from Farmbot_test_excel import *
@@ -138,8 +138,8 @@ class App:
 
         #Pin Number Peripheral
         self.pinNumb_fan = 10
-        self.pinNumb_water = 9
-        self.pinNumb_seed = 8
+        self.pinNumb_water = 8
+        self.pinNumb_seed = 9
 
         #self.Numb_X_Water
 
@@ -1248,54 +1248,111 @@ class App:
         conn.commit()
 
     def DatabaseAdd(self):
-    	db = sqlite3.connect('Database_Plant.db')
+        #Add to Database
+        print('Add Data to Database Plant')
+        print('Name Plant :', NAME_PLANT.get())
+        print('Location Plant (X, Y) :', LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get())
+        print('Note Plant :', NOTE_PLANT.get())
+        db = sqlite3.connect('Database_Plant.db')
     	db.execute("insert into Plant_Database (Name_Plant, Location_Plant_X, Location_Plant_Y, Date_Plant, Amount_Water, Age_Plant, Note_Plant) values (?,?,?,datetime('now', 'localtime'),0,0,?)",
                     [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get()])
     	db.commit()
+        print('Data Successfully Added to Database Plant')
+
         time.sleep(5)
         Target_X= LOCATION_PLANT_X.get()
         Target_Y= LOCATION_PLANT_Y.get()
         Target_Z= LOCATION_PLANT_Z.get()
         line_to_replace = 6
 
-        with open('GetBiji.txt', 'r') as file:
-            lines = file.readlines()
-        if len(lines) > int(line_to_replace):
-            tes1= 'G00 X{0} Y{0} Z0 \n'.format(Target_X, Target_Y)
-            print('Tes', tes1)
-            lines[line_to_replace] = tes1
-        with open('GetBiji.txt', 'w') as file:
+        #B with open('GetBiji.txt', 'r') as file:
+        #B    lines = file.readlines()
+        #B if len(lines) > int(line_to_replace):
+        #B    tes1= 'G00 X{0} Y{0} Z0 \n'.format(Target_X, Target_Y)
+        #B    lines[line_to_replace] = tes1
+        '''with open('GetBiji.txt', 'w') as file:
             file.writelines(lines)
-
-        if self.ArdMntr.connect:
-            if self.StartRunScript_judge:
-                #===================================
-                # Delete Scanning Thread
-                #===================================
-                self.StartRunScript_judge= False
-                del(self.thread_runningScript)
-
-
-            else:
-
+                #Start Planting
                 with open('GetBiji.txt') as f:
                     with open('tmp.txt', 'w') as f1:
                         for line in f:
-                            f1.write(line)
+                            f1.write(line)'''
+        with open("GetBiji.txt") as f:
+            with open("tmp.txt", "w") as f1:
+                for line in f:
+                    f1.write(line)
                 #=================================
                 # New Thread of Scanning process
                 #================================
-                self.Planting_On= True
-                self.thread_runningScript= threading.Thread(target= self.runningScript_run)
-                self.thread_runningScript.start()
+        print('Arduino Motor to Seed Location Coordinates')
+        print('Arduino Motor Move to Location Seeding Coordinates')
 
+        print('Process Planting')
+        cmd_file = open('tmp.txt', "r")
+        lines = cmd_file.readlines()
+        x_step = 0
+        y_step= 0
+        for line in lines:
+            cols = line.split("#")
+            print '***', self.StartRunScript_judge,line
+            print("line=%s,cols_count=%i" %(line,len(cols)))
+            if len(cols)>=1:
+                cmd = cols[0]
+                cmd = cmd.strip()
+                if len(cmd)>0:
+                    print(">> "+cmd)
+                    cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                    while 1:
+                        if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                            self.ArdMntr.serial_send("%s" %cmd)
+                            time.sleep(1)
+                            break
+                        else:
+                            time.sleep(1)
+        while 1:
+            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                time.sleep(5)
+                self.ArdMntr.serial_send('G00 X16 Y10 Z0')
+                time.sleep(1)
+                break
+            else:
+                time.sleep(1)
+        while 1:
+            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                self.ArdMntr.move_Coord(Target_X, Target_Y, 180)
+                time.sleep(1)
+                break
+            else:
+                time.sleep(1)
+        while 1:
+            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                with open("GetBiji1.txt") as f:
+                    with open("tmp.txt", "w") as f1:
+                        for line in f:
+                            f1.write(line)
+                cmd_file = open('tmp.txt', "r")
+                lines = cmd_file.readlines()
+                for line in lines:
+                    cols = line.split("#")
+                    print '***', self.StartRunScript_judge,line
+                    print("line=%s,cols_count=%i" %(line,len(cols)))
+                    if len(cols)>=1:
+                        cmd = cols[0]
+                        cmd = cmd.strip()
+                        if len(cmd)>0:
+                            print(">> "+cmd)
+                            cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                            while 1:
+                                if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                                    self.ArdMntr.serial_send("%s" %cmd)
+                                    time.sleep(1)
+                                    break
+                                else:
+                                    time.sleep(1)
 
-                self.tabbox.tab(self.tab_control, state='disable')
-                self.tabbox.tab(self.tab_event_schedule,state='disable')
-                self.tabbox.tab(self.tab_loadscript, state='disable')
-                self.StartRunScript_judge= True
-        else:
-            tkMessageBox.showerror("Error", "Arduino connection refused!")
+                break
+            else:
+                time.sleep(1)
 
 
     def Viewall(self):
@@ -1343,15 +1400,25 @@ class App:
         conn.close()
 
     def Update_data(self):
-    	db = sqlite3.connect('Database_Plant.db')
-    	db.execute('update Plant_Database set Name_Plant, Location_Plant_X, Location_Plant_Y, Note_Plant) values (?,?,?,?,?)',
-                    [NAME_PLANT.get(),LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get()])
+        print('Update Database Plant')
+        print('Name Plant :', NAME_PLANT.get())
+        print('Location Plant (X, Y) :', LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get())
+        print('Note Plant :', NOTE_PLANT.get())
+        db = sqlite3.connect('Database_Plant.db')
+    	db.execute('update Plant_Database set Location_Plant_X = ?, Location_Plant_Y = ?, Note_Plant = ? where Name_Plant = ? ',
+                    (LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get(), NOTE_PLANT.get(), NAME_PLANT.get()))
     	db.commit()
+        print('Data Successfully Updated')
 
     def Delete_data(self):
-    	db = sqlite3.connect('Database_Plant.db')
+        print('Delete Database Plant')
+        print('Name Plant :', NAME_PLANT.get())
+        print('Location Plant (X, Y) :', LOCATION_PLANT_X.get(), LOCATION_PLANT_Y.get())
+        print('Note Plant :', NOTE_PLANT.get())
+        db = sqlite3.connect('Database_Plant.db')
     	db.execute('delete from Plant_Database where Name_Plant = ?',(NAME_PLANT.get(),))
     	db.commit()
+        print('Data Successfully Delete')
 
 
     def store_para(self, arg_filepath, arg_filename):
@@ -1893,7 +1960,7 @@ class App:
 
     def display_panel_singleframe(self, arg_frame):
         tmp_frame= cv2.cvtColor(arg_frame, cv2.COLOR_BGR2RGB)
-        tmp_frame = self.mark_cross_line(tmp_frame)
+        #tmp_frame = self.mark_cross_line(tmp_frame)
         tmp_frame= cv2.resize(tmp_frame,(self.singleframe_width,self.singleframe_height),interpolation=cv2.INTER_LINEAR)	#2018.02.20-???
         result = Image.fromarray(tmp_frame)
         result = ImageTk.PhotoImage(result)
@@ -1982,7 +2049,7 @@ class App:
                 After_MoveAmount_X1 = tmp_x + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x + self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
                 print 'Move Amount X Axis (Up)', self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_X1 - self.Move_interval) == tmp_x :
+                '''if self.Move_interval == 10 and (After_MoveAmount_X1 - self.Move_interval) == tmp_x :
                     Move_Amount10_Up = pd.DataFrame([['3', 'Move Amount X Axis (Up) 10mm',  str(After_MoveAmount_X1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['3'])
                     Move_Amount10_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=3, startcol= 0)
                     writer.save()
@@ -2025,13 +2092,13 @@ class App:
                 else:
                     Move_Amount500_Up = pd.DataFrame([['7', 'Move Amount X Axis (Up) 500mm',  str(After_MoveAmount_X1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X1 - self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['7'])
                     Move_Amount500_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=7, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
             elif move_type == 'Down':
                 self.ArdMntr.move_Coord(tmp_x - self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
                 After_MoveAmount_X2 = tmp_x - self.Move_interval
                 print 'Move Amount X Axis (Down)', self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_X2 + self.Move_interval) == tmp_x :
+                '''if self.Move_interval == 10 and (After_MoveAmount_X2 + self.Move_interval) == tmp_x :
                     Move_Amount10_Down = pd.DataFrame([['8', 'Move Amount X Axis (Down) 10mm',  str(After_MoveAmount_X2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['8'])
                     Move_Amount10_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=8, startcol= 0)
                     writer.save()
@@ -2074,13 +2141,13 @@ class App:
                 else:
                     Move_Amount500_Down = pd.DataFrame([['12', 'Move Amount X Axis (Down) 500mm',  str(After_MoveAmount_X2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['12'])
                     Move_Amount500_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=12, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
             elif move_type == 'Right':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y + self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y1 = tmp_y + self.Move_interval
                 print 'Move Amount Y Axis (Right)',self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_Y1 - self.Move_interval) == tmp_y :
+                '''if self.Move_interval == 10 and (After_MoveAmount_Y1 - self.Move_interval) == tmp_y :
                     Move_Amount10_Right = pd.DataFrame([['13', 'Move Amount Y Axis (Right) 10mm',  str(After_MoveAmount_Y1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['13'])
                     Move_Amount10_Right.to_excel(writer,'Sheet1', index=False, header=False, startrow=13, startcol= 0)
                     writer.save()
@@ -2123,13 +2190,13 @@ class App:
                 else:
                     Move_Amount500_Right= pd.DataFrame([['17', 'Move Amount Y Axis (Right) 500mm',  str(After_MoveAmount_Y1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y1 - self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['17'])
                     Move_Amount500_Right.to_excel(writer,'Sheet1', index=False, header=False, startrow=17, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
             elif move_type == 'Left':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y - self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y2 = tmp_y - self.Move_interval
                 print 'Move Amount Y Axis (Left)',self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_Y2 + self.Move_interval) == tmp_y :
+                '''if self.Move_interval == 10 and (After_MoveAmount_Y2 + self.Move_interval) == tmp_y :
                     Move_Amount10_Left = pd.DataFrame([['18', 'Move Amount Y Axis (Left) 10mm',  str(After_MoveAmount_Y2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['18'])
                     Move_Amount10_Left.to_excel(writer,'Sheet1', index=False, header=False, startrow=18, startcol= 0)
                     writer.save()
@@ -2172,7 +2239,7 @@ class App:
                 else:
                     Move_Amount500_Left = pd.DataFrame([['22', 'Move Amount Y Axis (Left) 500mm',  str(After_MoveAmount_Y2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['22'])
                     Move_Amount500_Left.to_excel(writer,'Sheet1', index=False, header=False, startrow=22, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
     def btn_MoveAmountZaxis_click(self, event= None):
         if self.tabbox.index(self.tabbox.select())==0:
@@ -2186,7 +2253,7 @@ class App:
                 After_MoveAmount_Z1 = tmp_z + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z + self.Move_interval * self.Move_intervalUnit)
                 print 'Move Amount Z Axis (Up)',self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_Z1 - self.Move_interval) == tmp_z :
+                '''if self.Move_interval == 10 and (After_MoveAmount_Z1 - self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Up = pd.DataFrame([['23', 'Move Amount Z Axis (Up) 10mm',  str(After_MoveAmount_Z1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['23'])
                     Move_Amount10_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=23, startcol= 0)
                     writer.save()
@@ -2229,13 +2296,13 @@ class App:
                 else:
                     Move_Amount500_Z_Up = pd.DataFrame([['27', 'Move Amount Z Axis (Up) 500mm',  str(After_MoveAmount_Z1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z1 - self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['27'])
                     Move_Amount500_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=27, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
             elif move_type == 'Down':
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z - self.Move_interval * self.Move_intervalUnit)
                 After_MoveAmount_Z2 = tmp_z  - self.Move_interval
                 print 'Move Amount Z Axis (Down)',self.Move_interval * self.Move_intervalUnit, ' mm'
-                if self.Move_interval == 10 and (After_MoveAmount_Z2 + self.Move_interval) == tmp_z :
+                '''if self.Move_interval == 10 and (After_MoveAmount_Z2 + self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Down = pd.DataFrame([['28', 'Move Amount Z Axis (Down) 10mm',  str(After_MoveAmount_Z2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['28'])
                     Move_Amount10_Z_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=28, startcol= 0)
                     writer.save()
@@ -2278,12 +2345,17 @@ class App:
                 else:
                     Move_Amount500_Z_Up = pd.DataFrame([['32', 'Move Amount Z Axis (Down) 500mm',  str(After_MoveAmount_Z2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z2 + self.Move_interval) + '(Start of Coordinates)' , 'Fail']], index=['32'])
                     Move_Amount500_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=32, startcol= 0)
-                    writer.save()
+                    writer.save()'''
 
     def btn_E_Stop_click(self):
-        E_Stop = 'E'
-        self.ArdMntr.serial_send(E_Stop)
-
+        if self.ArdMntr.connect:
+            self.ArdMntr.E_Stop(not(self.ArdMntr.E_StopOn))
+            if self.ArdMntr.E_StopOn:
+                E_Stop= 'On'
+                print('Emergency Stop :', E_Stop)
+            else:
+                E_Stop= 'Off'
+                print('Emergency Stop :', E_Stop)
 
     def btn_Seed_click(self):
         if self.ArdMntr.connect:
@@ -2293,18 +2365,18 @@ class App:
                 SeedOn = '1'
                 self.btn_Indi_Seed.config(text= text_seed, fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen)
                 self.root.update()
-                Seed_Plant = pd.DataFrame([['34', 'Vaccum Pump On (Seed)', '1', SeedOn, 'Sucess']], index=['34'])
-                Seed_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=34, startcol= 0)
-                writer.save()
+                #Seed_Plant = pd.DataFrame([['34', 'Vaccum Pump On (Seed)', '1', SeedOn, 'Sucess']], index=['34'])
+                #Seed_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=34, startcol= 0)
+                #writer.save()
 
             else:
                 text_seed= 'Off'
                 SeedOff ='0'
                 self.btn_Indi_Seed.config(text= text_seed, fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
                 self.root.update()
-                Seed_Plant = pd.DataFrame([['34', 'Vaccum Pump On (Seed)' , '1', SeedOff, 'Failed']], index=['34'])
-                Seed_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=34, startcol= 0)
-                writer.save()
+                #Seed_Plant = pd.DataFrame([['34', 'Vaccum Pump On (Seed)' , '1', SeedOff, 'Failed']], index=['34'])
+                #Seed_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=34, startcol= 0)
+                #writer.save()
             print 'Seeding... '
 
     def btn_Water_click(self):
@@ -2315,9 +2387,9 @@ class App:
                 self.btn_Indi_Water.config(text= text_water, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen)
                 self.root.update()
                 WaterOn = '1'
-                Water_Plant = pd.DataFrame([['35', 'Water Pump On (Water)', '1', WaterOn, 'Sucess']], index=['35'])
-                Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=35, startcol= 0)
-                writer.save()
+                #Water_Plant = pd.DataFrame([['35', 'Water Pump On (Water)', '1', WaterOn, 'Sucess']], index=['35'])
+                #Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=35, startcol= 0)
+                #writer.save()
 
 
             else:
@@ -2325,9 +2397,9 @@ class App:
                 self.btn_Indi_Water.config(text=text_water, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
                 self.root.update()
                 WaterOff = '0'
-                Water_Plant = pd.DataFrame([['35', 'Water Pump On (Water)' , '1', WaterOff, 'Failed']], index=['35'])
-                Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=35, startcol= 0)
-                writer.save()
+                #Water_Plant = pd.DataFrame([['35', 'Water Pump On (Water)' , '1', WaterOff, 'Failed']], index=['35'])
+                #Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=35, startcol= 0)
+                #writer.save()
             print 'Watering... '
 
     def btn_Light_click(self):
@@ -2339,14 +2411,14 @@ class App:
                 self.root.update()
                 LightOn = '1'
                 LightOff = '0'
-                if self.ArdMntr.LightOn :
+                '''if self.ArdMntr.LightOn :
                     Water_Plant = pd.DataFrame([['36', 'Light On', '1', LightOn, 'Sucess']], index=['36'])
                     Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=36, startcol= 0)
                     writer.save()
                 else:
                     Water_Plant = pd.DataFrame([['36', 'Light On' , '1', LightOff, 'Failed']], index=['36'])
                     Water_Plant.to_excel(writer,'Sheet1', index=False, header=False, startrow=36, startcol= 0)
-                    writer.save()
+                    writer.save()'''
             else:
                 text_light= 'Off'
                 self.btn_Indi_Light.config(text=text_light, fg= 'white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed)
@@ -2354,6 +2426,8 @@ class App:
             print 'Lighting... '
 
     def btn_Load_Water_click(self):
+        print('Loading Tool Water Sensor')
+        print('Arduino Move to Coordinates')
         self.btn_Tool_Water.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Water_click)
         if self.ArdMntr.connect:
             if self.StartRunScript_judge:
@@ -2380,8 +2454,11 @@ class App:
                 self.StartRunScript_judge= True
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
+        print('Tool Water in Home')
 
     def btn_Unload_Water_click(self):
+        print('UnLoading Tool Water Sensor')
+        print('Arduino Move to Coordinates')
         self.btn_Tool_Water.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Water_click)
         if self.ArdMntr.connect:
             if self.StartRunScript_judge:
@@ -2408,9 +2485,11 @@ class App:
                 self.StartRunScript_judge= True
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
-
+        print('Tool Water in Tool Post')
 
     def btn_Load_Soil_click(self):
+        print('Loading Tool Soil Sensor')
+        print('Arduino Move to Coordinates')
         self.btn_Tool_Soil.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Soil_click)
         if self.ArdMntr.connect:
             if self.StartRunScript_judge:
@@ -2437,8 +2516,11 @@ class App:
                 self.StartRunScript_judge= True
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
+        print('Tool Soil Sensor in Home')
 
     def btn_Unload_Soil_click(self):
+        print('UnLoading Tool Soil Sensor')
+        print('Arduino Move to Coordinates')
         self.btn_Tool_Soil.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Soil_click)
         if self.ArdMntr.connect:
             if self.StartRunScript_judge:
@@ -2466,10 +2548,13 @@ class App:
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
 
+        print('Tool Soil Sensor in Tool Post')
 
 
     def btn_Load_Seed_click(self):
         self.btn_Tool_Seed.config(text= "Unload", fg='white', activeforeground='white', bg=self.bgRed, activebackground=self.bgRed, command=self.btn_Unload_Seed_click)
+        print('Loading Tool Seeding')
+        print('Arduino Move to Coordinates')
         '''Target_X= str(self.Loc_Seed_X)
         Target_Y= str(self.Loc_Seed_Y)
         Target_Z= str(self.Loc_Seed_Z)
@@ -2523,9 +2608,13 @@ class App:
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
 
+        print('Tool Seeding in Home')
 
     def btn_Unload_Seed_click(self):
         self.btn_Tool_Seed.config(text= "Load", fg='white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen, command= self.btn_Load_Seed_click)
+        print('UnLoading Tool Seeding')
+        print('Arduino Move to Coordinates')
+
         '''Target_X= str(self.Loc_Seed_X)
         Target_Y= str(self.Loc_Seed_Y)
         Target_Z= str(self.Loc_Seed_Z)
@@ -2571,7 +2660,7 @@ class App:
         else:
             tkMessageBox.showerror("Error", "Arduino connection refused!")
 
-
+        print('Tool Seeding in Tool Post')
 
     def btn_choosescript_click(self):
         str_scriptPath = tkFileDialog.askopenfilename(title = "Select file",filetypes = (("all files","*.*"),("Text File", "*.txt"),("jpeg files","*.jpg")))
@@ -2691,14 +2780,14 @@ class App:
             if img is not False:
                 self.singleframe= img.copy()
                 self.display_panel_singleframe(self.singleframe)
-                Load_Image = pd.DataFrame([['38', 'Load Image' , 'True', 'True', 'Sucess']], index=['38'])
-                Load_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=38, startcol= 0)
-                writer.save()
+                #Load_Image = pd.DataFrame([['38', 'Load Image' , 'True', 'True', 'Sucess']], index=['38'])
+                #Load_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=38, startcol= 0)
+                #writer.save()
             else:
                 tkMessageBox.showerror('Image does not exist', 'The image\n{0}\n does not exist. Please check the path again')
-                Load_Image = pd.DataFrame([['38', 'Load Image' , 'True', 'False', 'Failed']], index=['38'])
-                Load_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=38, startcol= 0)
-                writer.save()
+                #Load_Image = pd.DataFrame([['38', 'Load Image' , 'True', 'False', 'Failed']], index=['38'])
+                #Load_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=38, startcol= 0)
+                #writer.save()
 
     def btn_Home_click(self):
         Home = 'G28'
@@ -2719,7 +2808,7 @@ class App:
                 if (Target_X>=0) & (Target_X<=self.limit[0]) & (Target_Y>=0) & (Target_Y<=self.limit[1]):
                     cmd= 'G00 X{0} Y{1} Z{2}'.format(Target_X, Target_Y, Target_Z)
                     #self.ArdMntr.serial_send(cmd)
-                    print 'ArdMntr.move_Coord...'
+                    print 'ArdMntr.move_Coordinates......'
                     self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
                     print 'Command: ',cmd
                     time.sleep(1)
@@ -2815,14 +2904,14 @@ class App:
         #Bcv2.imwrite(arg_savePath + arg_filename + imageName + '.jpg', arg_frame)
         dir_name, file_name = os.path.split(__file__)
         dir_name = os.path.join(dir_name, 'Data')
-        if imageName !="":
+        '''if imageName !="":
             Save_Image = pd.DataFrame([['37', 'Save & Display Capture Image' , 'True', 'True', 'Sucess']], index=['37'])
             Save_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=37, startcol= 0)
             writer.save()
         else :
             Save_Image = pd.DataFrame([['37', 'Display Camera to GUI', 'True', 'False', 'Failed']], index=['37'])
             Save_Image.to_excel(writer,'Sheet1', index=False, header=False, startrow=37, startcol= 0)
-            writer.save()
+            writer.save()'''
 
     def runningScript_run(self):
         cmd_file = open('tmp.txt', "r")
@@ -2989,7 +3078,8 @@ class App:
                     f1.write(line)
         cmd_file = open('tmp.txt', "r")
         lines = cmd_file.readlines()
-
+        x_step = 0
+        y_step= 0
         for line in lines:
             cols = line.split("#")
             print '***', self.StartRunScript_judge,line
@@ -3022,7 +3112,9 @@ class App:
             print '>>> Watering Running...'
 
             for step_X in range(0, self.scan_X[2]):
+                x_step= x_step+1
                 for step_Y in range(0, self.scan_Y[2]):
+                    y_step= y_step+1
                     if self.StartScan_judge== False:
                         break
                     if step_X % 2 ==0:
@@ -3033,6 +3125,8 @@ class App:
                     #tmp_X, tmp_Y= self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1]
                     print '>> X, Y: ', tmp_X, ', ', tmp_Y
                     #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1])
+                    self.input_Zpos= int(self.entry_Zpos.get())
+
                     while 1:
                         if (self.ArdMntr.cmd_state.is_ready()):
                             self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
@@ -3042,105 +3136,25 @@ class App:
                     # Check Condition Soil Sensor
                     while 1:
                         #Soil_Data = int(self.ArdMntr.cmd_state.strSoil)
-                        Soil_Data = 50
                         if (self.ArdMntr.cmd_state.is_ready()):
+                            Soil_Data = int(self.ArdMntr.cmd_state.strSoil)
                             time.sleep(5)
-                            if Soil_Data > self.get_Moisture_Min and Soil_Data < self.get_Moisture_Max:
+                            print('Check Soil Data', Soil_Data)
+                            if Soil_Data < self.get_Moisture_Max:
                                 time.sleep(1)
-                                with open("UnLoadSoilnLoadWater.txt") as f:
-                                    with open("tmp.txt", "w") as f1:
-                                        for line in f:
-                                            f1.write(line)
-                                cmd_file = open('tmp.txt', "r")
-                                lines = cmd_file.readlines()
-
-                                for line in lines:
-                                    cols = line.split("#")
-                                    print '***', self.StartRunScript_judge,line
-                                    print("line=%s,cols_count=%i" %(line,len(cols)))
-                                    if len(cols)>=1:
-                                        cmd = cols[0]
-                                        cmd = cmd.strip()
-                                        if len(cmd)>0:
-                                            print(">> "+cmd)
-                                            cmd_code= cmd.strip().split(' ')[0].replace(' ','')
-                                            while 1:
-                                                if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
-                                                    self.ArdMntr.serial_send("%s" %cmd)
-                                                    time.sleep(1)
-                                                    break
-                                                else:
-                                                    time.sleep(1)
-                                            time.sleep(1)
                                 while 1:
                                     if (self.ArdMntr.cmd_state.is_ready()):
                                         self.ArdMntr.move_Coord(tmp_X, tmp_Y, 0)
+                                        time.sleep(1)
                                         break
+
                                 while 1:
                                     if (self.ArdMntr.cmd_state.is_ready()):
                                         self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
                                         time.sleep(3)
                                         self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
                                         break
-
-                                with open("UnLoadWater.txt") as f:
-                                    with open("tmp.txt", "w") as f1:
-                                        for line in f:
-                                            f1.write(line)
-                                cmd_file = open('tmp.txt', "r")
-                                lines = cmd_file.readlines()
-
-                                for line in lines:
-                                    cols = line.split("#")
-                                    print '***', self.StartRunScript_judge,line
-                                    print("line=%s,cols_count=%i" %(line,len(cols)))
-                                    if len(cols)>=1:
-                                        cmd = cols[0]
-                                        cmd = cmd.strip()
-                                        if len(cmd)>0:
-                                            print(">> "+cmd)
-                                            cmd_code= cmd.strip().split(' ')[0].replace(' ','')
-                                            while 1:
-                                                if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
-                                                    self.ArdMntr.serial_send("%s" %cmd)
-                                                    time.sleep(1)
-                                                    break
-                                                else:
-                                                    time.sleep(1)
-                                    time.sleep(1)
-                                #Check Work or Not
-                                if step_X == self.scan_X[2] and step_Y == self.scan_Y[2]:
-                                    time.sleep(1)
-                                    break
-                                else:
-                                    with open("LoadSoil.txt") as f:
-                                        with open("tmp.txt", "w") as f1:
-                                            for line in f:
-                                                f1.write(line)
-                                    cmd_file = open('tmp.txt', "r")
-                                    lines = cmd_file.readlines()
-
-                                    for line in lines:
-                                        cols = line.split("#")
-                                        print '***', self.StartRunScript_judge,line
-                                        print("line=%s,cols_count=%i" %(line,len(cols)))
-                                        if len(cols)>=1:
-                                            cmd = cols[0]
-                                            cmd = cmd.strip()
-                                            if len(cmd)>0:
-                                                print(">> "+cmd)
-                                                cmd_code= cmd.strip().split(' ')[0].replace(' ','')
-                                                while 1:
-                                                    if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
-                                                        self.ArdMntr.serial_send("%s" %cmd)
-                                                        time.sleep(1)
-                                                        break
-                                                    else:
-                                                        time.sleep(1)
-                                        time.sleep(1)
-                                    break
-
-
+                                break
                             else :
                                 time.sleep(1)
                                 break
@@ -3151,7 +3165,8 @@ class App:
                         break
                     step= step+1
             self.StartScan_judge= False
-
+            x_step=0
+            y_step=0
         else:
             time.sleep(0.2)
             step=0

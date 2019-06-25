@@ -10,9 +10,9 @@ import time
 import sys
 import tkMessageBox
 from Farmbot_test_excel import *
-import pandas as pd
-from pandas import ExcelWriter
-from pandas import ExcelFile
+#import pandas as pd
+#from pandas import ExcelWriter
+#from pandas import ExcelFile
 import numpy as np
 
 CMDSTATE_R00 = 0 #idle
@@ -96,6 +96,7 @@ class MonitorThread(threading.Thread):
         self.WaterOn= False
         self.SeedOn= False
         self.LightOn= False
+        self.E_StopOn= False
         self.FanOn= False
         self.channel=['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2', '/dev/ttyUSB0', '/dev/tty0']
         self.connect_serial()
@@ -109,23 +110,23 @@ class MonitorThread(threading.Thread):
                         self.ser = Serial(tmp_channel, 115200, timeout=1) #FIXME, cha    nge device id to your system device
                         print tmp_channel,': connected successfully!'
                         self.connect= True
-                        Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino":Connected Successfully"', tmp_channel + ': Connection Successfully', 'Success' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
-                        Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
-                        writer.save()
+                        #Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino":Connected Successfully"', tmp_channel + ': Connection Successfully', 'Success' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
+                        #Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
+                        #writer.save()
                         break
                     except:
                         print tmp_channel,': connection Refused!'
-                        Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino":Connected Successfully"', tmp_channel + ': Connection Refused', 'Fail' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
-                        Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
-                        writer.save()
+                        #Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino":Connected Successfully"', tmp_channel + ': Connection Refused', 'Fail' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
+                        #Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
+                        #writer.save()
 
             except:
                 print 'Connection of Arduino refused!'
                 tkMessageBox.showerror("Error","Connection of Arduino refused!")
                 print tmp_channel,': connection Refused!'
-                Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino ":Connected Successfully"', 'Error Connection Arduino Refused', 'Fail' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
-                Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
-                writer.save()
+                #Connect_Arduino = pd.DataFrame([['1', 'Connect to Arduino', 'Number Channel Arduino ":Connected Successfully"', 'Error Connection Arduino Refused', 'Fail' ]], columns=['No', 'Action', 'Output Needed', 'Result', 'Status'])
+                #Connect_Arduino.to_excel(writer,'Sheet1', index=False, header=True, startrow=0, startcol= 0)
+                #writer.save()
         else:
             tkMessageBox.showerror("Error", "Connection of Arduino is already built!")
 
@@ -247,6 +248,15 @@ class MonitorThread(threading.Thread):
             #self.serial_send('F41 P8 V0 M0')  #2018.02.12 {0}->8
             self.LightOn= False
 
+    def E_Stop(self, arg_On=True):
+        if arg_On:
+            self.serial_send('E')
+            self.E_StopOn= True
+        else:
+            self.serial_send('F09')
+            self.E_StopOn= False
+
+
     def switch_Moisture(self, arg_On=True):
         Moisture3 = 'T01 V1'
         Moisture4 = 'T01 V0'
@@ -265,14 +275,14 @@ class MonitorThread(threading.Thread):
         while True:
             tmp_x , tmp_y , tmp_z = self.get_CurPosition()
             if tmp_x == arg_Xpos and tmp_y == arg_Ypos and tmp_z == arg_Zpos :
-                Move_Coor = pd.DataFrame([['33', 'Move to Coordinates' , 'X:' + str(arg_Xpos) + ', Y:' + str(arg_Ypos) + ', Z:' + str(arg_Zpos), 'X:' + str(tmp_x) + ', Y:' + str(tmp_y) + ', Z:' + str(tmp_z), 'Success']], index=['33'])
-                Move_Coor.to_excel(writer,'Sheet1', index=False, header=False, startrow=33, startcol= 0)
-                writer.save()
+                #Move_Coor = pd.DataFrame([['33', 'Move to Coordinates' , 'X:' + str(arg_Xpos) + ', Y:' + str(arg_Ypos) + ', Z:' + str(arg_Zpos), 'X:' + str(tmp_x) + ', Y:' + str(tmp_y) + ', Z:' + str(tmp_z), 'Success']], index=['33'])
+                #Move_Coor.to_excel(writer,'Sheet1', index=False, header=False, startrow=33, startcol= 0)
+                #writer.save()
                 break
             else:
-                Move_Coor = pd.DataFrame([['33', 'Move to Coordinates' , 'X:' + str(arg_Xpos) + ', Y:' + str(arg_Ypos) + ', Z:' + str(arg_Zpos), 'X:' + str(tmp_x) + ', Y:' + str(tmp_y) + ', Z:' + str(tmp_z), 'Failed']], index=['33'])
-                Move_Coor.to_excel(writer,'Sheet1', index=False, header=False, startrow=33, startcol= 0)
-                writer.save()
+                #Move_Coor = pd.DataFrame([['33', 'Move to Coordinates' , 'X:' + str(arg_Xpos) + ', Y:' + str(arg_Ypos) + ', Z:' + str(arg_Zpos), 'X:' + str(tmp_x) + ', Y:' + str(tmp_y) + ', Z:' + str(tmp_z), 'Failed']], index=['33'])
+                #Move_Coor.to_excel(writer,'Sheet1', index=False, header=False, startrow=33, startcol= 0)
+                #writer.save()
                 break
 
 
@@ -288,7 +298,7 @@ class MonitorThread(threading.Thread):
 
     def get_SoilData(self):
 
-        soildata = self.cmd_state.strSoil
+        soildata = int(self.cmd_state.strSoil)
 
         return soildata
 
