@@ -13,11 +13,11 @@ from PIL import Image
 from PIL import ImageTk
 import class_MyThread
 
-from Farmbot_test_excel import *
+#from Farmbot_test_excel import *
 
-import pandas as pd
-from pandas import ExcelWriter
-from pandas import ExcelFile
+#import pandas as pd
+#from pandas import ExcelWriter
+#from pandas import ExcelFile
 import numpy as np
 
 class CameraLink:
@@ -45,26 +45,26 @@ class CameraLink:
                     print 'Cam ID ',tmp_id,': connected successfully!'
                     self.connect= True
                     self.camera_id= tmp_id
-                    Connect_Camera = pd.DataFrame([['2','Connect to Camera', 'Number Channel Camera ":Connected Successfully"', str(tmp_id) + ': Connected Successfully', 'Success']], index=['2'])
-                    Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
-                    writer.save()
+                    #Connect_Camera = pd.DataFrame([['2','Connect to Camera', 'Number Channel Camera ":Connected Successfully"', str(tmp_id) + ': Connected Successfully', 'Success']], index=['2'])
+                    #Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
+                    #writer.save()
                     break
                 except:
                     print 'Cam ID ',tmp_id,': connection Refused!'
                     self.connect= False
-                    Connect_Camera = pd.DataFrame([['2', 'Connect to Camera', 'Number Channel Camera ":Connected Successful"', str(tmp_id) + ': Connection Refused', 'Fail']], index=['2'] )
-                    Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
-                    writer.save()
+                    #Connect_Camera = pd.DataFrame([['2', 'Connect to Camera', 'Number Channel Camera ":Connected Successful"', str(tmp_id) + ': Connection Refused', 'Fail']], index=['2'] )
+                    #Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
+                    #writer.save()
             if not(self.connect):
                 tkMessageBox.showerror("Error","Connection of Camera refused!")
-                Connect_Camera = pd.DataFrame([['2', 'Connect to Camera', 'Number Channel Camera ":Connected Successful"', 'Error, Connection of Camera Refused', 'Fail']], index=['2'])
-                Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
-                writer.save()
+                #Connect_Camera = pd.DataFrame([['2', 'Connect to Camera', 'Number Channel Camera ":Connected Successful"', 'Error, Connection of Camera Refused', 'Fail']], index=['2'])
+                #Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
+                #writer.save()
         else:
             self.connect= True
-            Connect_Camera = pd.DataFrame([['2','Connect to Camera', 'Number Channel Camera ":Connected Successfully"', str(self.camera_id) + ': Connected Successfully', 'Success']], index=['2'])
-            Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
-            writer.save()
+            #Connect_Camera = pd.DataFrame([['2','Connect to Camera', 'Number Channel Camera ":Connected Successfully"', str(self.camera_id) + ': Connected Successfully', 'Success']], index=['2'])
+            #Connect_Camera.to_excel(writer,'Sheet1', index=False, header=False, startrow=2, startcol= 0)
+            #writer.save()
 
     def get_frame(self):
         if self.cap.isOpened():
