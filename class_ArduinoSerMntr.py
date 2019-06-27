@@ -9,7 +9,7 @@ from serial import *
 import time
 import sys
 import tkMessageBox
-from Farmbot_test_excel import *
+#from Farmbot_test_excel import *
 #import pandas as pd
 #from pandas import ExcelWriter
 #from pandas import ExcelFile
@@ -98,6 +98,7 @@ class MonitorThread(threading.Thread):
         self.LightOn= False
         self.E_StopOn= False
         self.FanOn= False
+        self.MoistureOn= False
         self.channel=['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2', '/dev/ttyUSB0', '/dev/tty0']
         self.connect_serial()
         self.cmd_state = CmdState()
@@ -266,6 +267,8 @@ class MonitorThread(threading.Thread):
         else :
             self.serial_send(Moisture4)
             self.MoistureOn = False
+            self.strSoil = "0"
+
 
     def move_Coord(self, arg_Xpos, arg_Ypos, arg_Zpos):
         cmd= 'G00 X{0} Y{1} Z{2}'.format(arg_Xpos, arg_Ypos, arg_Zpos)

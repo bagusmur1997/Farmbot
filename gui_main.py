@@ -425,7 +425,7 @@ class App:
 
         # Button Moisture Sensor
         photo_moisture= self.IconResize(gui_vars.saveParaPath+'img_moisture.png')
-        self.btn_Moisture= Tkinter.Button(self.tab_control, image= photo_moisture, cursor='hand2')
+        self.btn_Moisture= Tkinter.Button(self.tab_control, image= photo_moisture, cursor='hand2', command= self.btn_Moisture_click)
         self.btn_Moisture.image= photo_moisture
         self.btn_Moisture.place(x= self.btn_CamGrab.winfo_x() + int(self.btn_CamGrab.winfo_reqwidth()*1.2) + gui_vars.interval_x, y=self.btn_Seed.winfo_y())
         self.root.update()
@@ -1311,19 +1311,30 @@ class App:
                             time.sleep(1)
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
-                time.sleep(5)
-                self.ArdMntr.serial_send('G00 X16 Y10 Z0')
+                time.sleep(8)
+                self.ArdMntr.serial_send('G00 X10 Y12 Z0')
                 time.sleep(1)
                 break
             else:
                 time.sleep(1)
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
-                self.ArdMntr.move_Coord(Target_X, Target_Y, 180)
+                self.input_Zpos= int(self.entry_Zpos.get())
+                self.ArdMntr.move_Coord(Target_X, Target_Y, 0)
                 time.sleep(1)
                 break
             else:
                 time.sleep(1)
+
+        while 1:
+            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                self.input_Zpos= int(self.entry_Zpos.get())
+                self.ArdMntr.move_Coord(Target_X, Target_Y, self.input_Zpos)
+                time.sleep(1)
+                break
+            else:
+                time.sleep(1)
+
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
                 with open("GetBiji1.txt") as f:
@@ -1970,7 +1981,7 @@ class App:
     def reset_mergeframe(self):
         self.mergeframe= np.zeros((int(self.mergeframe_height), int(self.mergeframe_width),3),np.uint8)
         cv2.putText(self.mergeframe, 'Display Scanning Result',(10,20),cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255),1)
-        cv2.putText(self.mergeframe, '0',(6,545),cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
+        '''cv2.putText(self.mergeframe, '0',(6,545),cv2.FONT_HERSHEY_SIMPLEX, 0.3,(255,255,255),1)
         # Axis Y
         cv2.putText(self.mergeframe, '86', (130,545),cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
         cv2.putText(self.mergeframe, '172', (254,545), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255,255,255), 1)
@@ -1984,7 +1995,7 @@ class App:
         cv2.putText(self.mergeframe, '300', (0, 295), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,255,255), 1)
         cv2.putText(self.mergeframe, '400', (0, 215), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,255,255), 1)
         cv2.putText(self.mergeframe, '500', (0, 135), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,255,255), 1)
-        cv2.putText(self.mergeframe, '600', (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,255,255), 1)
+        cv2.putText(self.mergeframe, '600', (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.2, (255,255,255), 1)'''
 
     def set_mergeframe_size(self, arg_x, arg_y):
         self.mergeframe_splitX = int((self.mergeframe_width - gui_vars.interval_x*2) / arg_y)
@@ -3137,10 +3148,13 @@ class App:
                     while 1:
                         #Soil_Data = int(self.ArdMntr.cmd_state.strSoil)
                         if (self.ArdMntr.cmd_state.is_ready()):
+                            self.ArdMntr.switch_Moisture(not(self.ArdMntr.MoistureOn))
+                            time.sleep(5)
                             Soil_Data = int(self.ArdMntr.cmd_state.strSoil)
                             time.sleep(5)
                             print('Check Soil Data', Soil_Data)
                             if Soil_Data < self.get_Moisture_Max:
+                                self.ArdMntr.switch_Moisture(not(self.ArdMntr.MoistureOn))
                                 time.sleep(1)
                                 while 1:
                                     if (self.ArdMntr.cmd_state.is_ready()):
@@ -3151,9 +3165,11 @@ class App:
                                 while 1:
                                     if (self.ArdMntr.cmd_state.is_ready()):
                                         self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
-                                        time.sleep(3)
+                                        time.sleep(5)
                                         self.ArdMntr.switch_Water(self.pinNumb_water, not(self.ArdMntr.WaterOn) , -1)
+                                        time.sleep(3)
                                         break
+
                                 break
                             else :
                                 time.sleep(1)
@@ -3167,6 +3183,31 @@ class App:
             self.StartScan_judge= False
             x_step=0
             y_step=0
+            with open("UnLoadSoil.txt") as f:
+                with open("tmp.txt", "w") as f1:
+                    for line in f:
+                        f1.write(line)
+            cmd_file = open('tmp.txt', "r")
+            lines = cmd_file.readlines()
+            x_step = 0
+            y_step= 0
+            for line in lines:
+                cols = line.split("#")
+                print '***', self.StartRunScript_judge,line
+                print("line=%s,cols_count=%i" %(line,len(cols)))
+                if len(cols)>=1:
+                    cmd = cols[0]
+                    cmd = cmd.strip()
+                    if len(cmd)>0:
+                        print(">> "+cmd)
+                        cmd_code= cmd.strip().split(' ')[0].replace(' ','')
+                        while 1:
+                            if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                                self.ArdMntr.serial_send("%s" %cmd)
+                                time.sleep(1)
+                                break
+                            else:
+                                time.sleep(1)
         else:
             time.sleep(0.2)
             step=0
