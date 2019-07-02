@@ -54,6 +54,7 @@ from dialog_Tools_Setting import ToolsSetting
 from dialog_CameraConnection import CameraConnection
 from dialog_Tools_Setting_1 import ToolSetting
 import utils_tool
+from dialog_Distance_Setting import DistanceSetting
 
 import os
 import json
@@ -65,7 +66,7 @@ import cv2
 #from pandas import ExcelFile
 import numpy as np
 
-from Farmbot_test_excel import *
+#from Farmbot_test_excel import *
 class App:
 
     # Ininitalization
@@ -135,7 +136,9 @@ class App:
         self.Seed_Tool_Setting= params['Seed Tool Setting']
         self.Water_Tool_Setting= params['Water Tool Setting']
         self.Tool_Setting_para= params['Tools Setting']
-
+        self.Distance_Watering_para= params['Distance Watering (Z)']
+        self.Distance_Soil_para= params['Distance Soil Sensor (Z)']
+        self.Distance_Seeding_para= params['Distance Seeding (Z)']
         #Pin Number Peripheral
         self.pinNumb_fan = 10
         self.pinNumb_water = 8
@@ -233,6 +236,7 @@ class App:
         self.menubar.add_cascade(label="Setting", underline=0, menu=self.SettingMenu)
         self.SettingMenu.add_command(label= "Peripheral Setting", command= self.set_Peripheral)
         self.SettingMenu.add_command(label= "Motor Setting", command= self.set_Motor)
+        self.SettingMenu.add_command(label= "Distance Setting (Z)", command=self.set_Distance)
         #self.SettingMenu.add_command(label = "Tools Setting", command= self.set_Tool_1)
         self.ConnectMenu = Tkinter.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Communication", underline= 0, menu=self.ConnectMenu)
@@ -950,6 +954,7 @@ class App:
         self.btn_DeleteButton.place(x= self.btn_UpdateButton.winfo_x()+ self.btn_UpdateButton.winfo_reqwidth()+ gui_vars.interval_x*2, y= self.btn_UpdateButton.winfo_y())
         self.root.update
 
+
         # ==================================================
         # [TAB IMAGE PROCASSING]
         # ==================================================
@@ -1004,6 +1009,26 @@ class App:
         self.btn_Tool_Soil.place(x= self.lbl_Tool_Soil.winfo_x() + self.lbl_Tool_Soil.winfo_reqwidth() + gui_vars.interval_x, y=self.lbl_Tool_Soil.winfo_y() - gui_vars.interval_y)
         self.root.update()
 
+
+        # ==================================================
+        # [TAB Event Log]
+        # ==================================================
+        self.Bg_Event_Log = Tkinter.Label(self.tab_planting, text="", font= myfont14_Bold, width= 31, height= 7, bg=bgBlue1, highlightbackground=bgBlue3, highlightcolor=bgBlue, highlightthickness=2)
+    	self.Bg_Event_Log.place(x= gui_vars.interval_x -4, y = self.btn_Tool_Soil.winfo_y()+ self.btn_Tool_Soil.winfo_height()+gui_vars.interval_y *3 )
+    	self.root.update()
+
+        self.lbl_Event_Log= Tkinter.Label(self.tab_planting, text="Event Log", font= myfont14_Bold, width= 30, fg= 'white', activeforeground='white', bg= bgGray)# command= self.show_hide_Event_Schedule3)
+        self.lbl_Event_Log.place(x= gui_vars.interval_x, y = self.btn_Tool_Soil.winfo_y()+ self.btn_Tool_Soil.winfo_height()+gui_vars.interval_y * 4 - 3)
+        self.root.update()
+
+        self.btn_View_Log= Tkinter.Button(self.tab_planting, text= 'View Logs', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.Viewall_Database_Logs)
+        self.btn_View_Log.place(x= gui_vars.interval_x * 18 , y=self.lbl_Event_Log.winfo_y() + self.lbl_Event_Log.winfo_height()+ gui_vars.interval_y * 0)
+        self.root.update()
+
+        #B self.btn_Insert_Log= Tkinter.Button(self.tab_planting, text= 'Insert Logs', font=myfont12_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, command= self.Insert_Database_Logs)
+        #B self.btn_Insert_Log.place(x= gui_vars.interval_x * 25 , y=self.lbl_Event_Log.winfo_y() + self.lbl_Event_Log.winfo_height()+ gui_vars.interval_y * 0)
+        #B self.root.update()
+
         '''self.lbl_green_plant_detect= Tkinter.Label(self.tab_planting, text="Detect Green Plant", font= myfont14_Bold)
         self.lbl_green_plant_detect.place(x= gui_vars.interval_x, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y + 5)
         self.root.update()
@@ -1011,6 +1036,7 @@ class App:
         self.btn_plant_detect= Tkinter.Button(self.tab_planting, text='Detect',font= myfont14_Bold, fg= 'white', activeforeground='white', bg=self.bgGreen, activebackground=self.bgGreen_active, width= btn_width, height= btn_height,command= self.detectGreenPlant)
         self.btn_plant_detect.place(x= self.lbl_green_plant_detect.winfo_x()+ self.lbl_green_plant_detect.winfo_reqwidth()+ gui_vars.interval_x, y= self.btn_loadImg.winfo_y()+ self.btn_loadImg.winfo_height()+ gui_vars.interval_y)
         self.root.update()
+
 
         #=============================================
         # [group] Plant Index
@@ -1247,6 +1273,59 @@ class App:
         "CREATE TABLE IF NOT EXISTS 'Plant_Database' (No INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,Name_Plant VARCHAR(100), Location_Plant_X INTEGER, Location_Plant_Y INTEGER, Date_Plant TIME, Amount_Water INTEGER, Age_Plant REAL, Note_Plant VARCHAR(100))")
         conn.commit()
 
+    def Database_Logs(self):
+        global conn, cursor
+        conn = sqlite3.connect("Database_Log.db")
+        cursor = conn.cursor()
+        cursor.execute( "CREATE TABLE IF NOT EXISTS 'Database_Log'(No INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, Time TIME, Action VARCHAR(50))")
+        conn.commit()
+
+    def Insert_Database_Logs(self):
+        tmp_x = 10
+        tmp_y = 20
+        tmp_z = 30
+        txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(self.entry_Xpos.get()) + ', ' + str(self.entry_Ypos.get()) + ', ' + str(self.entry_Zpos.get()) + ' )'
+        print(txt)
+        db = sqlite3.connect('Database_Log.db')
+    	db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+    	db.commit()
+        db.close()
+
+    def Viewall_Database_Logs(self):
+        global tree
+        self.Database_Logs()
+        ViewFrame = Toplevel()
+        ViewFrame.title("Database Event Logs")
+        tes = str(datetime.datetime.now())
+        #cursor.execute("UPDATE Plant_Database SET Age_Plant = (SELECT strftime('%s', 'now') - strftime('%s',Date_Plant) FROM Plant_Database)")
+        #cursor.execute("SELECT * FROM 'Plant_Database'")
+        cursor.execute("SELECT No, Time, Action FROM Database_Log")
+        fetch = cursor.fetchall()
+        scrollbarx = Scrollbar(ViewFrame, orient=HORIZONTAL)
+        scrollbary = Scrollbar(ViewFrame, orient=VERTICAL)
+        tree = ttk.Treeview(ViewFrame, columns=("No", "Time", "Action"),
+                            selectmode=EXTENDED, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+
+        scrollbary.config(command=tree.yview)
+        scrollbary.pack(side=RIGHT, fill=Y)
+        scrollbarx.config(command=tree.xview)
+        scrollbarx.pack(side=BOTTOM, fill=X)
+        tree.heading('No', text="No", anchor=CENTER),
+        tree.heading('Time', text="Time", anchor=CENTER),
+        tree.heading('Action', text="Activity", anchor=CENTER),
+        tree.column('#0', stretch=NO, minwidth=0, width=0),
+        tree.column('#1', stretch=NO, minwidth=0, width=30),
+        tree.column('#2', stretch=NO, minwidth=0, width=200),
+        tree.column('#3', stretch= NO, minwidth=0, width=400),
+        tree.pack()
+
+        for data in fetch:
+            tree.insert('', 'end', values=data)
+
+        cursor.close()
+        conn.close()
+
+
     def DatabaseAdd(self):
         #Add to Database
         print('Add Data to Database Plant')
@@ -1288,6 +1367,14 @@ class App:
         print('Arduino Motor Move to Location Seeding Coordinates')
 
         print('Process Planting')
+
+        txt= 'Process Planting : Get Seed'
+        print(txt)
+        db = sqlite3.connect('Database_Log.db')
+        db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+        db.commit()
+        db.close()
+
         cmd_file = open('tmp.txt', "r")
         lines = cmd_file.readlines()
         x_step = 0
@@ -1309,10 +1396,11 @@ class App:
                             break
                         else:
                             time.sleep(1)
+
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
                 time.sleep(8)
-                self.ArdMntr.serial_send('G00 X10 Y12 Z0')
+                self.ArdMntr.serial_send('G00 X11 Y12 Z0')
                 time.sleep(1)
                 break
             else:
@@ -1329,7 +1417,7 @@ class App:
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
                 self.input_Zpos= int(self.entry_Zpos.get())
-                self.ArdMntr.move_Coord(Target_X, Target_Y, self.input_Zpos)
+                self.ArdMntr.move_Coord(Target_X, Target_Y, self.Distance_Seeding_para[0])
                 time.sleep(1)
                 break
             else:
@@ -1337,6 +1425,13 @@ class App:
 
         while 1:
             if self.ArdMntr.cmd_state.is_ready(): #wait system ready to accept commands
+                txt= 'Process Planting Take Off Seed'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+            	db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            	db.commit()
+                db.close()
+
                 with open("GetBiji1.txt") as f:
                     with open("tmp.txt", "w") as f1:
                         for line in f:
@@ -1446,6 +1541,10 @@ class App:
         saveDict['Seed Tool Setting']= self.Seed_Tool_Setting
         saveDict['Water Tool Setting']= self.Water_Tool_Setting
         saveDict['Tools Setting']=  self.Tool_Setting_para
+        saveDict['Distance Watering (Z)'] = self.Distance_Watering_para
+        saveDict['Distance Soil Sensor (Z)'] = self.Distance_Soil_para
+        saveDict['Distance Seeding (Z)'] = self.Distance_Seeding_para
+
         self.config.write_json(saveDict)
         print "Para set"
 
@@ -1936,11 +2035,19 @@ class App:
         print 'Location Watering Tool: ', self.Loc_Water_X, self.Loc_Water_Y, self.Loc_Water_Z
         print 'Location Seeding Tool: ', self.Loc_Seed_X, self.Loc_Seed_Y, self.Loc_Seed_Z
 
+    def set_Distance(self):
+        Var= DistanceSetting(self.root, self.Distance_Watering_para, self.Distance_Soil_para, self.Distance_Seeding_para)
+        if Var.result is not None:
+            print 'Result Distance Setting :',Var.result
+            self.Distance_Watering_para= [Var.result[0]]
+            self.Distance_Soil_para= [Var.result[1]]
+            self.Distance_Seeding_para= [Var.result[2]]
+
     def set_Motor(self):
         if self.ArdMntr.connect:
             Var= MotorSetting(self.root, self.MaxSpeed, self.Acceleration)
             if Var.result is not None:
-                print 'result: ',Var.result
+                print 'Result Motor Setting : ',Var.result
                 #self.MaxSpeed= [Var.result[0], Var.result[2]]
                 #self.Acceleration= [Var.result[1], Var.result[3]]
                 self.MaxSpeed= [Var.result[0], Var.result[2], Var.result[4]]
@@ -2060,6 +2167,15 @@ class App:
                 After_MoveAmount_X1 = tmp_x + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x + self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
                 print 'Move Amount X Axis (Up)', self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                # Insert To Database Logs
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = ('+ str(tmp_x + self.Move_interval * self.Move_intervalUnit) + ', '  + str(tmp_y) + ', ' + str(tmp_z) +')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                            [txt])
+                db.commit()
+                db.close()
+
                 '''if self.Move_interval == 10 and (After_MoveAmount_X1 - self.Move_interval) == tmp_x :
                     Move_Amount10_Up = pd.DataFrame([['3', 'Move Amount X Axis (Up) 10mm',  str(After_MoveAmount_X1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['3'])
                     Move_Amount10_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=3, startcol= 0)
@@ -2109,6 +2225,15 @@ class App:
                 self.ArdMntr.move_Coord(tmp_x - self.Move_interval * self.Move_intervalUnit, tmp_y, tmp_z)
                 After_MoveAmount_X2 = tmp_x - self.Move_interval
                 print 'Move Amount X Axis (Down)', self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                # Insert Into Database Logs
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = ('+ str(tmp_x - self.Move_interval * self.Move_intervalUnit) + ', ' + str(tmp_y) + ', ' + str(tmp_z) + ')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                            [txt])
+                db.commit()
+                db.close()
+
                 '''if self.Move_interval == 10 and (After_MoveAmount_X2 + self.Move_interval) == tmp_x :
                     Move_Amount10_Down = pd.DataFrame([['8', 'Move Amount X Axis (Down) 10mm',  str(After_MoveAmount_X2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_x) + '(Start of Coordinates)' , str(After_MoveAmount_X2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['8'])
                     Move_Amount10_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=8, startcol= 0)
@@ -2158,6 +2283,14 @@ class App:
                 self.ArdMntr.move_Coord(tmp_x, tmp_y + self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y1 = tmp_y + self.Move_interval
                 print 'Move Amount Y Axis (Right)',self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(tmp_x) + ', ' + str(tmp_y + self.Move_interval * self.Move_intervalUnit) + ', ' + str(tmp_z) + ')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                            [txt])
+                db.commit()
+                db.close()
+
                 '''if self.Move_interval == 10 and (After_MoveAmount_Y1 - self.Move_interval) == tmp_y :
                     Move_Amount10_Right = pd.DataFrame([['13', 'Move Amount Y Axis (Right) 10mm',  str(After_MoveAmount_Y1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['13'])
                     Move_Amount10_Right.to_excel(writer,'Sheet1', index=False, header=False, startrow=13, startcol= 0)
@@ -2207,6 +2340,12 @@ class App:
                 self.ArdMntr.move_Coord(tmp_x, tmp_y - self.Move_interval * self.Move_intervalUnit, tmp_z)
                 After_MoveAmount_Y2 = tmp_y - self.Move_interval
                 print 'Move Amount Y Axis (Left)',self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(tmp_x) + ', ' + str(tmp_y - self.Move_interval * self.Move_intervalUnit) + ', ' + str(tmp_z) + ')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)", [txt])
+                db.commit()
+                db.close()
                 '''if self.Move_interval == 10 and (After_MoveAmount_Y2 + self.Move_interval) == tmp_y :
                     Move_Amount10_Left = pd.DataFrame([['18', 'Move Amount Y Axis (Left) 10mm',  str(After_MoveAmount_Y2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_y) + '(Start of Coordinates)' , str(After_MoveAmount_Y2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['18'])
                     Move_Amount10_Left.to_excel(writer,'Sheet1', index=False, header=False, startrow=18, startcol= 0)
@@ -2264,6 +2403,13 @@ class App:
                 After_MoveAmount_Z1 = tmp_z + self.Move_interval
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z + self.Move_interval * self.Move_intervalUnit)
                 print 'Move Amount Z Axis (Up)',self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(tmp_x) + ', ' + str(tmp_y) + ', ' + str(tmp_z + self.Move_interval * self.Move_intervalUnit) + ')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                            [txt])
+                db.commit()
+                db.close()
                 '''if self.Move_interval == 10 and (After_MoveAmount_Z1 - self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Up = pd.DataFrame([['23', 'Move Amount Z Axis (Up) 10mm',  str(After_MoveAmount_Z1) + '(End of Coordinates)' + '-' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z1 - self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['23'])
                     Move_Amount10_Z_Up.to_excel(writer,'Sheet1', index=False, header=False, startrow=23, startcol= 0)
@@ -2313,6 +2459,13 @@ class App:
                 self.ArdMntr.move_Coord(tmp_x, tmp_y, tmp_z - self.Move_interval * self.Move_intervalUnit)
                 After_MoveAmount_Z2 = tmp_z  - self.Move_interval
                 print 'Move Amount Z Axis (Down)',self.Move_interval * self.Move_intervalUnit, ' mm'
+
+                txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(tmp_x) + ', ' + str(tmp_y) + ', ' + str(tmp_z - self.Move_interval * self.Move_intervalUnit) + ')'
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                            [txt])
+                db.commit()
+                db.close()
                 '''if self.Move_interval == 10 and (After_MoveAmount_Z2 + self.Move_interval) == tmp_z :
                     Move_Amount10_Z_Down = pd.DataFrame([['28', 'Move Amount Z Axis (Down) 10mm',  str(After_MoveAmount_Z2) + '(End of Coordinates)' + '+' + str(self.Move_interval) +'(Move Amount)' + '=' + str(tmp_z) + '(Start of Coordinates)' , str(After_MoveAmount_Z2 + self.Move_interval) + '(Start of Coordinates)' , 'Success']], index=['28'])
                     Move_Amount10_Z_Down.to_excel(writer,'Sheet1', index=False, header=False, startrow=28, startcol= 0)
@@ -2739,6 +2892,7 @@ class App:
             del(self.thread_scanning)
 
         else:
+
             if self.ArdMntr.connect:
                 try:
                     self.reset_mergeframe()
@@ -2749,6 +2903,16 @@ class App:
                     print '### ', self.scan_X, self.scan_Y
 
                     self.ArdMntr.move_Coord(self.scan_X[0], self.scan_Y[0], self.input_Zpos)
+
+                    txt= 'Scanning : Arduino Move To Coordinates (X, Y, Z) = (' + str(self.scan_X[0]) + ', ' + str(self.Scan_Y[0]) + ', ' + str(self.entry_Zpos.get()) + ' )'
+                    db = sqlite3.connect('Database_Log.db')
+                    db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+                    print(txt)
+                    time.sleep(5)
+                    db.commit()
+                    db.close()
+
+
                     if self.scan_X[0]+self.scan_X[1]*self.scan_X[2]<self.limit[0] | self.scan_Y[0]+self.scan_Y[1]*self.scan_Y[2]<self.limit[1]:
                         self.StartScan_judge= True
                         #self.saveTimeIndex= datetime.now().strftime("%Y%m%d%H%M%S")
@@ -2781,6 +2945,13 @@ class App:
         self.saveImg_function(self.singleframe, gui_vars.savePath, self.imagename)
         self.display_panel_singleframe(self.singleframe)
 
+        txt= 'Get and Save Image'
+        db = sqlite3.connect('Database_Log.db')
+        db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                    [txt])
+        db.commit()
+        db.close()
+
     def btn_loadImg_click(self):
         dir_name, file_name = os.path.split(__file__)
         dir_name = os.path.join(dir_name, 'Data')
@@ -2804,9 +2975,18 @@ class App:
         Home = 'G28'
         self.ArdMntr.serial_send(Home)
 
+        txt= 'Arduino Move To Coordinates (X, Y, Z) = (0, 0, 0)'
+        db = sqlite3.connect('Database_Log.db')
+        db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                    [txt])
+        db.commit()
+        db.close()
+        time.sleep(1)
+
     def btn_Moisture_click(self):
         if self.ArdMntr.connect:
             self.ArdMntr.switch_Moisture(not(self.ArdMntr.MoistureOn))
+
 
 
 
@@ -2816,12 +2996,24 @@ class App:
                 Target_X= int(self.entry_Xpos.get())
                 Target_Y= int(self.entry_Ypos.get())
                 Target_Z= int(self.entry_Zpos.get())
+
                 if (Target_X>=0) & (Target_X<=self.limit[0]) & (Target_Y>=0) & (Target_Y<=self.limit[1]):
+
+                    txt= 'Arduino Move To Coordinates (X, Y, Z) = (' + str(self.entry_Xpos.get()) + ', ' + str(self.entry_Ypos.get()) + ', ' + str(self.entry_Zpos.get()) + ' )'
+                    db = sqlite3.connect('Database_Log.db')
+                    db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)", [txt])
+                    print(txt)
+                    db.commit()
+                    db.close()
+
                     cmd= 'G00 X{0} Y{1} Z{2}'.format(Target_X, Target_Y, Target_Z)
                     #self.ArdMntr.serial_send(cmd)
                     print 'ArdMntr.move_Coordinates......'
                     self.ArdMntr.move_Coord(Target_X, Target_Y, Target_Z)
                     print 'Command: ',cmd
+                    time.sleep(1)
+
+
                     time.sleep(1)
 
                 else:
@@ -2987,7 +3179,16 @@ class App:
                     print '>> X, Y: ', tmp_X, ', ', tmp_Y
                     #self.saveScanning= 'Raw_{0}_{1}.png'.format(self.scan_X[0]+ step_X*self.scan_X[1], self.scan_Y[0]+ step_Y*self.scan_Y[1])
                     self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
-                    time.sleep(1)
+
+                    txt= 'Scanning : Arduino Move To Coordinates (X, Y, Z) = (' + str(tmp_X) + ', ' + str(tmp_Y) + ', ' + str(self.input_Zpos) + ')'
+                    print(txt)
+                    db = sqlite3.connect('Database_Log.db')
+                    db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)" , [txt])
+                    db.commit()
+                    db.close()
+
+
+                    time.sleep(5)
                     while 1:
                         if (self.ArdMntr.cmd_state.is_ready()):
                             time.sleep(0.5)
@@ -3001,6 +3202,13 @@ class App:
                             #self.display_panel_mergeframe(result, step_X, step_Y)
                             #self.display_panel_mergeframe(result, step_Y, step_X)
 
+                            txt= 'Scanning : Camera Get Image'
+                            print(txt)
+                            db = sqlite3.connect('Database_Log.db')
+                            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                                        [txt])
+                            db.commit()
+
                             #self.display_panel_mergeframe(result, tmp_step_Y, step_X)
                             self.display_panel_mergeframe(result, tmp_step_Y, self.scan_X[2] - 1 - step_X)   	#2018.02.12
                             #print '>> display_panel X, Y: ', tmp_step_Y, ', ', self.scan_X[2] - 1 - step_X   	#2018.02.12
@@ -3010,6 +3218,8 @@ class App:
                             break
                         else:
                             time.sleep(1)
+
+
                     if self.StartScan_judge== False:
                         break
                     step= step+1
@@ -3140,7 +3350,8 @@ class App:
 
                     while 1:
                         if (self.ArdMntr.cmd_state.is_ready()):
-                            self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.input_Zpos)
+
+                            self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.Distance_Soil_para[0])
                             time.sleep(1)
                             break
 
@@ -3158,7 +3369,7 @@ class App:
                                 time.sleep(1)
                                 while 1:
                                     if (self.ArdMntr.cmd_state.is_ready()):
-                                        self.ArdMntr.move_Coord(tmp_X, tmp_Y, 0)
+                                        self.ArdMntr.move_Coord(tmp_X, tmp_Y, self.Distance_Watering_para[0])
                                         time.sleep(1)
                                         break
 

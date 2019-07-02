@@ -172,42 +172,89 @@ class MonitorThread(threading.Thread):
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))	#2018.02.28
             self.WaterOn= True
             print 'Watering On... '
+            txt= 'Scheduling Watering : Water Pump On'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
             if arg_delay== 0:
                 #self.serial_send('F41 P9 V0 M0')
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
                 self.WaterOn= False
                 print 'Watering Off... '
+                txt= 'Scheduling Watering : Water Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+                db.commit()
+                db.close()
             elif arg_delay> 0:
                 time.sleep(arg_delay)
                 #self.serial_send('F41 P9 V0 M0')
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
                 self.WaterOn= False
                 print 'Watering Off... '
+                txt= 'Scheduling Watering : Water Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+                db.commit()
+                db.close()
         else:
             #self.serial_send('F41 P9 V0 M0')
             self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
             self.WaterOn= False
             print 'Watering Off... '
+            txt= 'Scheduling Watering : Water Pump Off'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
 
     def Seed_Schedule(self, arg_pinNumb=10, arg_On=True, arg_delay=20):
         if arg_On:
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))
             self.SeedOn= True
             print 'Seeding On... '
+            txt= 'Planting : Vaccum Pump On'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
             if arg_delay== 0:
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))
                 self.SeedOn= False
                 print 'Seeding Off... '
+                txt= 'Planting : Vaccum Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+            	db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            	db.commit()
+                db.close()
             elif arg_delay> 0:
                 time.sleep(arg_delay)
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))
                 self.SeedOn= False
                 print 'Seeding Off... '
+                txt= 'Planting : Vaccum Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+            	db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            	db.commit()
+                db.close()
         else:
             self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))
             self.SeedOn= False
             print 'Seeding Off... '
-
+            txt= 'Planting : Vaccum Pump Off'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
 
 
 
@@ -216,27 +263,64 @@ class MonitorThread(threading.Thread):
             #self.serial_send('F41 P9 V1 M0')
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))	#2018.02.28
             self.WaterOn= True
+            txt= 'Water Pump On'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
+
             if arg_delay== 0:
                 #self.serial_send('F41 P9 V0 M0')
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
                 self.WaterOn= False
+                txt= 'Water Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+                db.commit()
+                db.close()
             elif arg_delay> 0:
                 time.sleep(arg_delay)
                 #self.serial_send('F41 P9 V0 M0')
                 self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
                 self.WaterOn= False
+                txt= 'Water Pump Off'
+                print(txt)
+                db = sqlite3.connect('Database_Log.db')
+                db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+                db.commit()
+                db.close()
         else:
             #self.serial_send('F41 P9 V0 M0')
             self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
             self.WaterOn= False
+            txt= 'Water Pump Off'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
 
     def switch_Seed(self, arg_pinNumb=10, arg_On=True):
         if arg_On:
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))
             self.SeedOn= True
+            txt= 'Vaccum Pump On'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
         else:
             self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))
             self.SeedOn= False
+            txt= 'Vaccum Pump Off'
+            print(txt)
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'),?)", [txt])
+            db.commit()
+            db.close()
 
 
     def switch_Light(self, arg_pinNumb=8, arg_On=True):     #2018.02.12 arg_on -> arg_On
@@ -244,18 +328,41 @@ class MonitorThread(threading.Thread):
             self.serial_send('F41 P{0} V1 M0'.format(arg_pinNumb))	#2018.02.28
             #self.serial_send('F41 P8 V1 M0')  #2018.02.12 {0}->8
             self.LightOn= True
+
+            txt= 'Light On'
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                        [txt])
+            db.commit()
         else:
             self.serial_send('F41 P{0} V0 M0'.format(arg_pinNumb))	#2018.02.28
             #self.serial_send('F41 P8 V0 M0')  #2018.02.12 {0}->8
             self.LightOn= False
 
+            txt= 'Light Off'
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                        [txt])
+            db.commit()
+
     def E_Stop(self, arg_On=True):
         if arg_On:
             self.serial_send('E')
             self.E_StopOn= True
+
+            txt= 'Push Emergency Stop'
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                        [txt])
+            db.commit()
         else:
             self.serial_send('F09')
             self.E_StopOn= False
+            txt= 'Reset Emergency Stop'
+            db = sqlite3.connect('Database_Log.db')
+            db.execute("insert into Database_Log (Time, Action) values (datetime('now', 'localtime'), ?)",
+                        [txt])
+            db.commit()
 
 
     def switch_Moisture(self, arg_On=True):
